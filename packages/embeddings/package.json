@@ -1,0 +1,20 @@
+{
+  "name": "@local-llm/embeddings",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build:internal": "echo 'no build (consumed as TypeScript source)'",
+    "clean": "rm -rf .turbo dist || true"
+  },
+  "dependencies": {
+    "@langchain/cohere": "^0.3.2",
+    "@langchain/core": "^0.3.42",
+    "@langchain/openai": "^0.4.4"
+  }
+}
