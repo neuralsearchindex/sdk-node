@@ -20,8 +20,13 @@
 export interface CachePlugin<V = unknown> {
   /** Return the value for `key`, or `undefined` on miss / any read failure. */
   get(key: string): Promise<V | undefined>;
-  /** Persist `value` under `key`. Never throws. */
-  set(key: string, value: V): Promise<void>;
+  /**
+   * Persist `value` under `key`. Never throws. `ttlMs`, when given, is a hint
+   * that the entry may be dropped after that many milliseconds — backends that
+   * support native expiry (Redis) honour it; others ignore it and rely on the
+   * read-through layer's own age check.
+   */
+  set(key: string, value: V, ttlMs?: number): Promise<void>;
   /** Optional: remove a single entry. */
   delete?(key: string): Promise<void>;
   /** Optional: drop every entry. */

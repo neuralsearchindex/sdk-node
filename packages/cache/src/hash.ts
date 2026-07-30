@@ -31,10 +31,15 @@ export function sha256(input: string): string {
 }
 
 /**
- * Cache key for a tool invocation: sha256 over the tool name and a stable
- * stringification of its input args. `config` is deliberately excluded — it
- * carries run-specific, non-deterministic data (e.g. `config.writer`).
+ * Derive a stable cache key from an ordered list of parts. Strings are used
+ * verbatim; anything else is deterministically stringified (stable key order).
+ * The whole thing is hashed so the key length stays fixed regardless of input.
+ *
+ *   cacheKey("bge-m3:v1", text)             // one namespace + one payload
+ *   cacheKey(model, sha256(query), docHash) // pre-hashed components
  */
-export function hashToolCall(toolName: string, input: unknown): string {
-  return sha256(`${toolName}${stableStringify(input)}`);
+export function cacheKey(...parts: unknown[]): string {
+  return sha256(
+    parts.map((p) => (typeof p === "string" ? p : stableStringify(p))).join("-"),
+  );
 }

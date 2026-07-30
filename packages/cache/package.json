@@ -10,15 +10,16 @@
     "./hash": "./src/hash.ts",
     "./cache-plugin": "./src/cache-plugin.ts",
     "./memory-cache-plugin": "./src/memory-cache-plugin.ts",
-    "./sqlite-cache-plugin": "./src/sqlite-cache-plugin.ts"
+    "./sqlite-cache-plugin": "./src/sqlite-cache-plugin.ts",
+    "./redis-cache-plugin": "./src/redis-cache-plugin.ts"
   },
   "scripts": {
     "build:internal": "echo 'no build (consumed as TypeScript source)'",
     "clean": "rm -rf .turbo dist || true"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.42",
-    "better-sqlite3": "12.11.1"
+    "better-sqlite3": "12.11.1",
+    "ioredis": "^5.8.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
