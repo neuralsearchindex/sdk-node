@@ -31,7 +31,10 @@ function makeTextEmbeddings(modelName: string): Embeddings {
             process.env.BGE_M3_BASE_URL ??
             process.env.OPENAI_API_BASE_URL,
           // Force native fetch (undici); node-fetch@2 breaks on Brotli under Node 24.
-          fetch: (...args: Parameters<typeof fetch>) => fetch(...args),
+          // Cast: the OpenAI SDK's `Fetch` type uses its own Request/Response shims,
+          // which don't structurally match lib.dom's global `fetch` even though the
+          // pass-through is behaviourally identical.
+          fetch: ((...args: Parameters<typeof fetch>) => fetch(...args)) as unknown as never,
         },
       });
     case "cohere":

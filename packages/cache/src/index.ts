@@ -7,6 +7,7 @@ import { InMemoryCachePlugin } from "./memory-cache-plugin.js";
 import { RedisCachePlugin } from "./redis-cache-plugin.js";
 
 export type { CachePlugin } from "./cache-plugin.js";
+export { globToRegExp } from "./cache-plugin.js";
 export {
   SqliteCachePlugin,
   type SqliteCacheOptions,

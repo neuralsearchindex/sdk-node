@@ -89,6 +89,34 @@ export class SqliteCachePlugin<V = unknown> implements CachePlugin<V> {
     }
   }
 
+  /** Remove a batch of exact keys in a single transaction; returns the count. */
+  async deleteMany(keys: string[]): Promise<number> {
+    if (keys.length === 0) return 0;
+    try {
+      const { db, del } = this.ready();
+      const run = db.transaction((batch: string[]) => {
+        let removed = 0;
+        for (const key of batch) removed += del.run(key).changes;
+        return removed;
+      });
+      return run(keys);
+    } catch {
+      return 0;
+    }
+  }
+
+  /** Remove every row whose key matches `pattern` via SQLite's native `GLOB`. */
+  async deletePattern(pattern: string): Promise<number> {
+    try {
+      const stmt = this.ready().db.prepare(
+        `DELETE FROM ${this.table} WHERE key GLOB ?`,
+      );
+      return stmt.run(pattern).changes;
+    } catch {
+      return 0;
+    }
+  }
+
   async clear(): Promise<void> {
     try {
       this.ready().db.exec(`DELETE FROM ${this.table}`);

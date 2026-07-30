@@ -89,20 +89,45 @@ export class RedisCachePlugin<V = unknown> implements CachePlugin<V> {
     }
   }
 
-  /** Drop every entry owned by this cache (its prefix only — never the whole DB). */
-  async clear(): Promise<void> {
+  /** Remove a batch of exact keys, chunked so one `DEL` never grows unbounded. */
+  async deleteMany(keys: string[]): Promise<number> {
+    if (keys.length === 0) return 0;
     try {
+      let removed = 0;
+      for (let i = 0; i < keys.length; i += 500) {
+        const chunk = keys.slice(i, i + 500).map((key) => this.k(key));
+        removed += await this.client.del(...chunk);
+      }
+      return removed;
+    } catch {
+      return 0;
+    }
+  }
+
+  /**
+   * Remove every entry whose key matches `pattern` (scoped to this cache's
+   * prefix). Streams with `SCAN` so a large keyspace never blocks the server.
+   */
+  async deletePattern(pattern: string): Promise<number> {
+    try {
+      let removed = 0;
       const stream = this.client.scanStream({
-        match: `${this.prefix}*`,
+        match: this.k(pattern),
         count: 500,
       });
       for await (const keys of stream) {
-        if ((keys as string[]).length > 0)
-          await this.client.del(...(keys as string[]));
+        const batch = keys as string[];
+        if (batch.length > 0) removed += await this.client.del(...batch);
       }
+      return removed;
     } catch {
-      // ignore
+      return 0;
     }
+  }
+
+  /** Drop every entry owned by this cache (its prefix only — never the whole DB). */
+  async clear(): Promise<void> {
+    await this.deletePattern("*");
   }
 
   /** Close the client if this plugin opened it. Mainly for tests. */

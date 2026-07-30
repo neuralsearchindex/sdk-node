@@ -29,6 +29,32 @@ export interface CachePlugin<V = unknown> {
   set(key: string, value: V, ttlMs?: number): Promise<void>;
   /** Optional: remove a single entry. */
   delete?(key: string): Promise<void>;
+  /**
+   * Optional: remove several exact keys in one pass. Returns how many entries
+   * were actually removed. Never throws (fail-open, like every other method).
+   */
+  deleteMany?(keys: string[]): Promise<number>;
+  /**
+   * Optional: remove every key matching a glob `pattern` (`*` = any run, `?` =
+   * any single char). Returns how many entries were removed. Backends translate
+   * the glob to their native matcher (Redis `SCAN MATCH`, SQLite `GLOB`, an
+   * anchored `RegExp` in memory). Never throws.
+   */
+  deletePattern?(pattern: string): Promise<number>;
   /** Optional: drop every entry. */
   clear?(): Promise<void>;
+}
+
+/**
+ * Translate a `*`/`?` glob into an anchored, case-sensitive {@link RegExp}. Only
+ * `*` and `?` are treated as wildcards; every other character (including `[`)
+ * is matched literally, so a key is never accidentally interpreted as a class.
+ * Used by backends without a native glob matcher (the in-memory plugin).
+ */
+export function globToRegExp(glob: string): RegExp {
+  const escaped = glob
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*")
+    .replace(/\?/g, ".");
+  return new RegExp(`^${escaped}$`);
 }

@@ -1,4 +1,4 @@
-import type { CachePlugin } from "./cache-plugin.js";
+import { type CachePlugin, globToRegExp } from "./cache-plugin.js";
 
 /**
  * Generic in-memory cache backend (a `Map`). Non-persistent — used by tests and
@@ -21,6 +21,21 @@ export class InMemoryCachePlugin<V = unknown> implements CachePlugin<V> {
 
   async delete(key: string): Promise<void> {
     this.store.delete(key);
+  }
+
+  async deleteMany(keys: string[]): Promise<number> {
+    let removed = 0;
+    for (const key of keys) if (this.store.delete(key)) removed++;
+    return removed;
+  }
+
+  async deletePattern(pattern: string): Promise<number> {
+    const re = globToRegExp(pattern);
+    let removed = 0;
+    for (const key of [...this.store.keys()]) {
+      if (re.test(key) && this.store.delete(key)) removed++;
+    }
+    return removed;
   }
 
   async clear(): Promise<void> {
