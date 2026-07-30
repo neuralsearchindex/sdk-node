@@ -28,7 +28,7 @@ function makeTextEmbeddings(modelName: string): Embeddings {
           // Prefer a dedicated bge-m3-embeddings endpoint; fall back to the
           // shared OpenAI base URL when unset.
           baseURL:
-            process.env.BGE_M3_BASE_URL ??
+            process.env.TEXT_EMBEDDING_URL ??
             process.env.OPENAI_API_BASE_URL,
           // Force native fetch (undici); node-fetch@2 breaks on Brotli under Node 24.
           // Cast: the OpenAI SDK's `Fetch` type uses its own Request/Response shims,
