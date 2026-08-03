@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@langchain/core": "^0.3.42",
-    "@local-llm/model-cache": "workspace:*",
+    "@local-llm/cache": "workspace:*",
     "langchain": "^0.3.19"
   },
   "devDependencies": {

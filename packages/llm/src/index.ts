@@ -1,5 +1,5 @@
 import { initChatModel } from "langchain/chat_models/universal";
-import { getModelCache } from "@local-llm/model-cache";
+import { getModelCache } from "@local-llm/cache/semantic";
 
 export interface LoadChatModelOptions {
   /** See note above — default OFF. */
