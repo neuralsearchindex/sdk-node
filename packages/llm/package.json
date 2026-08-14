@@ -13,9 +13,9 @@
     "clean": "rm -rf .turbo dist || true"
   },
   "dependencies": {
-    "@langchain/core": "^0.3.42",
+    "@langchain/core": "^1.2.7",
     "@local-llm/cache": "workspace:*",
-    "langchain": "^0.3.19"
+    "langchain": "^1.5.8"
   },
   "devDependencies": {
     "@types/node": "^20"

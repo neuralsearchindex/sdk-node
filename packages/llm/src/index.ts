@@ -1,3 +1,4 @@
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { initChatModel } from "langchain/chat_models/universal";
 import { getModelCache } from "@local-llm/cache/semantic";
 
@@ -72,7 +73,7 @@ function defaultPromptCacheKey(model: string): string {
 export async function loadChatModel(
   fullySpecifiedName: string,
   options?: LoadChatModelOptions,
-): Promise<ReturnType<typeof initChatModel>> {
+): Promise<BaseChatModel> {
   const {
     semanticCache = false,
     disableThinking = true,
@@ -121,7 +122,14 @@ export async function loadChatModel(
     ...rest,
   };
 
-  return provider
+  // `initChatModel` returns a `ConfigurableModel` (for runtime `.withConfig`
+  // model switching), which @langchain/core 1.x no longer types as assignable
+  // to `BaseChatModel` (added message-structure generics). We always load a
+  // fully-specified model and use it as a plain chat model — no caller does
+  // runtime reconfiguration — so we surface the documented `BaseChatModel`
+  // contract. The runtime object is a working chat model either way.
+  const chatModel = provider
     ? await initChatModel(model, { modelProvider: provider, ...config })
     : await initChatModel(model, config);
+  return chatModel as unknown as BaseChatModel;
 }
