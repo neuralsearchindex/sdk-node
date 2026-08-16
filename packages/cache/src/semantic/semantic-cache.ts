@@ -7,7 +7,7 @@ import type { DocumentInterface } from "@langchain/core/documents";
 import type { EmbeddingsInterface } from "@langchain/core/embeddings";
 import type { Generation } from "@langchain/core/outputs";
 
-import { sha256 } from "../hash.js";
+import { keyId } from "../hash.js";
 
 /**
  * Backend-agnostic **semantic** cache for LLM generations — the shared core of
@@ -194,7 +194,7 @@ export abstract class BaseSemanticCache<TFilter = unknown> extends BaseCache {
       const store = await this.getStore();
       const userMessage = extractUserMessage(prompt, this.opts.maxEmbedChars);
       const filter = this.opts.namespaceByLlmKey
-        ? this.buildFilter(sha256(llmKey))
+        ? this.buildFilter(keyId(llmKey))
         : undefined;
 
       const results = await store.similaritySearchWithScore(
@@ -255,7 +255,7 @@ export abstract class BaseSemanticCache<TFilter = unknown> extends BaseCache {
           // on any missing schema field.
           metadata: {
             generations: generationsJson,
-            llmkey: this.opts.namespaceByLlmKey ? sha256(llmKey) : "",
+            llmkey: this.opts.namespaceByLlmKey ? keyId(llmKey) : "",
           },
         },
       ]);
@@ -358,6 +358,73 @@ export abstract class BaseSemanticCache<TFilter = unknown> extends BaseCache {
   }
 
   /**
+   * Store a free-form text RECORD in a per-namespace collection, reusing this
+   * cache's vector-store plumbing (`buildStore`/`buildFilter`/`normalizeScore`).
+   * The `namespace` (e.g. a user id) is hashed into the same `llmkey` field the
+   * LLM cache uses for scoping, so records stay isolated per namespace. This is
+   * the generic seam durable "fact" collections build on — separate from the
+   * prompt→generation cache semantics (`lookup`/`update`). **Fail-open**: any
+   * embedding / store error is a no-op, never a throw.
+   *
+   * Use a DEDICATED collection for records so they never mix with cached
+   * generations. Requires `namespaceByLlmKey` on so `searchRecords` can filter.
+   */
+  async storeRecord(namespace: string, text: string): Promise<void> {
+    try {
+      await this.ensureReady();
+      const store = await this.getStore();
+      await store.addDocuments([
+        {
+          pageContent: text,
+          // `generations` is a schema field on some backends (Milvus) so it must
+          // be present; records don't use it. `llmkey` carries the namespace.
+          metadata: { generations: "[]", llmkey: keyId(namespace) },
+        },
+      ]);
+    } catch (error) {
+      console.log("[semantic record]", error);
+    }
+  }
+
+  /**
+   * Top-k stored RECORDS in `namespace` whose cosine similarity to `query` is
+   * `>= threshold`, deduped by text (case-insensitive), similarity order
+   * preserved. The counterpart to {@link storeRecord}. **Fail-open** → `[]`.
+   */
+  async searchRecords(
+    namespace: string,
+    query: string,
+    options: SuggestOptions,
+  ): Promise<QuerySuggestion[]> {
+    const { k, threshold, maxTextChars } = options;
+    if (!query.trim()) return [];
+    try {
+      await this.ensureReady();
+      const store = await this.getStore();
+      const filter = this.buildFilter(keyId(namespace));
+      const results = await store.similaritySearchWithScore(query, k, filter);
+
+      const out: QuerySuggestion[] = [];
+      const seen = new Set<string>();
+      for (const [doc, raw] of results) {
+        const similarity = this.normalizeScore(raw);
+        if (similarity < threshold) continue;
+        const text = (doc.pageContent ?? "").trim();
+        if (!text) continue;
+        if (maxTextChars && text.length > maxTextChars) continue;
+        const key = text.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ text, similarity });
+      }
+      return out;
+    } catch (error) {
+      console.log("[semantic record]", error);
+      return [];
+    }
+  }
+
+  /**
    * Candidate `(id, cosineSimilarity)` pairs for a user message — the seam
    * {@link clearByQueries} filters by threshold. Default: the shared vector
    * store's `similaritySearchWithScore` plus the hit's `id`, which works for the
@@ -388,6 +455,69 @@ export abstract class BaseSemanticCache<TFilter = unknown> extends BaseCache {
       return ids.length;
     }
     return 0;
+  }
+
+  /**
+   * List stored RECORDS in `namespace` as `(id, text)` WITHOUT a query vector —
+   * a metadata scan by the namespace's llmkey hash. The read side of a user-facing
+   * memory manager (the counterpart to {@link storeRecord}). Does NOT `ensureReady`
+   * so a mere list never CREATES a collection/index — each backend's
+   * {@link listByNamespace} treats a missing store as "empty". NOT fail-open:
+   * surfaces backend errors so the caller can report them.
+   */
+  async listRecords(
+    namespace: string,
+    options: { limit?: number } = {},
+  ): Promise<{ id: string; text: string }[]> {
+    return this.listByNamespace(keyId(namespace), options.limit ?? 100);
+  }
+
+  /**
+   * Delete a single stored record by id, but ONLY if it belongs to `namespace`
+   * (guards against deleting another namespace's record by guessing an id).
+   * Returns true iff a row was removed. NOT fail-open.
+   */
+  async deleteRecord(namespace: string, id: string): Promise<boolean> {
+    const owned = await this.listByNamespace(keyId(namespace), 1000);
+    if (!owned.some((r) => r.id === id)) return false;
+    return (await this.deleteByIds([id])) > 0;
+  }
+
+  /**
+   * Add a durable record to `namespace`, skipping near-duplicates (an existing
+   * record with cosine similarity `>= dedupeThreshold`). Returns true iff stored.
+   * Uses the {@link storeRecord} write path (fail-open) — the caller should
+   * re-list to confirm; a store error therefore surfaces as "didn't appear".
+   */
+  async addRecord(
+    namespace: string,
+    text: string,
+    options: { dedupeThreshold?: number } = {},
+  ): Promise<boolean> {
+    const clean = text.trim();
+    if (!clean) return false;
+    const dupes = await this.searchRecords(namespace, clean, {
+      k: 3,
+      threshold: options.dedupeThreshold ?? 0.92,
+    });
+    if (dupes.length > 0) return false;
+    await this.storeRecord(namespace, clean);
+    return true;
+  }
+
+  /**
+   * Backend-specific: list `(id, text)` for every record matching `llmKeyHash`,
+   * up to `limit`, via a metadata scan with NO query vector. Overridden per
+   * backend (raw SQL SELECT / Milvus `client.query` / OpenSearch term search). A
+   * missing collection/index returns `[]`. Default throws (like {@link clearAll}).
+   */
+  protected async listByNamespace(
+    _llmKeyHash: string,
+    _limit: number,
+  ): Promise<{ id: string; text: string }[]> {
+    throw new Error(
+      `listByNamespace is not implemented for ${this.constructor.name}`,
+    );
   }
 
   /** Lazily build (and memoize) the vector store, importing the backend driver only on first use. */

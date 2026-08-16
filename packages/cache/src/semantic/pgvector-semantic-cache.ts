@@ -46,6 +46,29 @@ export class PgVectorSemanticCache extends BaseSemanticCache<MetadataFilter> {
     return resp.rowCount ?? 0;
   }
 
+  // Metadata scan (no query vector): every row whose jsonb `llmkey` matches, for
+  // the memory manager. getStore() ran PGVectorStore.initialize, so the table
+  // exists. Table name is config, not user input, but sanitize defensively.
+  protected async listByNamespace(
+    llmKeyHash: string,
+    limit: number,
+  ): Promise<{ id: string; text: string }[]> {
+    const store = (await this.getStore()) as unknown as {
+      pool: {
+        query(
+          sql: string,
+          params: unknown[],
+        ): Promise<{ rows: { id: string | number; content: string }[] }>;
+      };
+    };
+    const table = this.pgOpts.name.replace(/[^A-Za-z0-9_]/g, "_");
+    const resp = await store.pool.query(
+      `SELECT id, content FROM "${table}" WHERE metadata->>'llmkey' = $1 LIMIT $2`,
+      [llmKeyHash, limit],
+    );
+    return resp.rows.map((r) => ({ id: String(r.id), text: r.content }));
+  }
+
   // pgvector's `<=>` under the cosine strategy returns a cosine *distance*
   // (0 = identical, 2 = opposite). Flip it to a similarity in [-1, 1].
   protected normalizeScore(distance: number): number {

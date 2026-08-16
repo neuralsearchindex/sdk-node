@@ -17,7 +17,7 @@ export {
   RedisCachePlugin,
   type RedisCacheOptions,
 } from "./redis-cache-plugin.js";
-export { cacheKey, sha256, stableStringify } from "./hash.js";
+export { cacheKey, keyId, sha256, stableStringify } from "./hash.js";
 
 /**
  * A generic key → value cache, built on the replaceable {@link CachePlugin}

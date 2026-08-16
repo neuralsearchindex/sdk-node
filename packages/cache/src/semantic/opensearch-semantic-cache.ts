@@ -37,8 +37,9 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
   }
 
   protected buildFilter(llmKeyHash: string): MetadataFilter {
-    // A sha256 hex hash is a single lowercase token, so a `term` on the analyzed
-    // `metadata.llmkey` text field matches it exactly.
+    // A hyphenless uuidv5 is a single lowercase hex token, so a `term` on the
+    // analyzed `metadata.llmkey` text field matches it exactly (a standard
+    // hyphenated UUID would be split apart by the analyzer).
     return { llmkey: llmKeyHash };
   }
 
@@ -70,6 +71,50 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
       };
       const status = e.statusCode ?? e.meta?.statusCode;
       if (status === 404 || e.body?.error?.type === "index_not_found_exception") return 0;
+      throw err;
+    }
+  }
+
+  // Metadata scan (no query vector): a `term` on `metadata.llmkey` returning each
+  // hit's `_id` + stored `text`, for the memory manager. A never-written index
+  // (404) means nothing stored → empty.
+  protected async listByNamespace(
+    llmKeyHash: string,
+    limit: number,
+  ): Promise<{ id: string; text: string }[]> {
+    const store = (await this.getStore()) as unknown as {
+      client: {
+        search(params: {
+          index: string;
+          body: unknown;
+        }): Promise<{
+          body?: {
+            hits?: { hits?: { _id: string; _source?: { text?: string } }[] };
+          };
+        }>;
+      };
+      indexName: string;
+    };
+    try {
+      const resp = await store.client.search({
+        index: store.indexName,
+        body: {
+          size: limit,
+          query: { term: { "metadata.llmkey": llmKeyHash } },
+          _source: ["text"],
+        },
+      });
+      const hits = resp.body?.hits?.hits ?? [];
+      return hits.map((h) => ({ id: h._id, text: h._source?.text ?? "" }));
+    } catch (err) {
+      const e = err as {
+        statusCode?: number;
+        meta?: { statusCode?: number };
+        body?: { error?: { type?: string } };
+      };
+      const status = e.statusCode ?? e.meta?.statusCode;
+      if (status === 404 || e.body?.error?.type === "index_not_found_exception")
+        return [];
       throw err;
     }
   }

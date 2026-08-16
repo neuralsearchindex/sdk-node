@@ -1,6 +1,7 @@
 import type {
   ConsistencyLevelEnum,
   MilvusClient,
+  QueryReq,
   SearchSimpleReq,
 } from "@zilliz/milvus2-sdk-node";
 
@@ -113,6 +114,37 @@ export class MilvusSemanticCache extends BaseSemanticCache<string> {
     return Number.isFinite(cnt) ? cnt : 0;
   }
 
+  // Metadata scan (no query vector): `client.query` filtered by the namespace's
+  // llmkey, returning the primary id + stored text, for the memory manager. A
+  // missing collection means nothing was ever stored → empty.
+  protected async listByNamespace(
+    llmKeyHash: string,
+    limit: number,
+  ): Promise<{ id: string; text: string }[]> {
+    const store = (await this.getStore()) as unknown as {
+      client: MilvusClient;
+      primaryField?: string;
+    };
+    const name = this.milvusOpts.name;
+    const has = await store.client.hasCollection({ collection_name: name });
+    if (!has.value) return [];
+
+    const primaryField = store.primaryField ?? PRIMARY_FIELD;
+    await store.client.loadCollectionSync({ collection_name: name });
+    const resp = await store.client.query({
+      collection_name: name,
+      filter: this.buildFilter(llmKeyHash),
+      output_fields: [primaryField, "langchain_text"],
+      limit,
+      consistency_level: "Strong" as unknown as ConsistencyLevelEnum,
+    } as QueryReq);
+    const rows = ((resp as { data?: Record<string, unknown>[] }).data) ?? [];
+    return rows.map((r) => ({
+      id: String(r[primaryField]),
+      text: String(r["langchain_text"] ?? ""),
+    }));
+  }
+
   // Milvus deletes by primary id; the LangChain store has no id-delete helper.
   protected async deleteByIds(ids: string[]): Promise<number> {
     const store = (await this.getStore()) as unknown as { client: MilvusClient };
@@ -213,7 +245,7 @@ export class MilvusSemanticCache extends BaseSemanticCache<string> {
         },
         {
           name: "llmkey",
-          description: "sha256 of the model+schema key (namespacing)",
+          description: "uuidv5 (hyphenless) of the model+schema key (namespacing)",
           data_type: DataType.VarChar,
           type_params: { max_length: "64" },
         },
