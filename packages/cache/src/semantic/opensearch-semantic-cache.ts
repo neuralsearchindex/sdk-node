@@ -70,7 +70,8 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
         body?: { error?: { type?: string } };
       };
       const status = e.statusCode ?? e.meta?.statusCode;
-      if (status === 404 || e.body?.error?.type === "index_not_found_exception") return 0;
+      if (status === 404 || e.body?.error?.type === "index_not_found_exception")
+        return 0;
       throw err;
     }
   }
@@ -84,10 +85,7 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
   ): Promise<{ id: string; text: string }[]> {
     const store = (await this.getStore()) as unknown as {
       client: {
-        search(params: {
-          index: string;
-          body: unknown;
-        }): Promise<{
+        search(params: { index: string; body: unknown }): Promise<{
           body?: {
             hits?: { hits?: { _id: string; _source?: { text?: string } }[] };
           };
@@ -101,6 +99,46 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
         body: {
           size: limit,
           query: { term: { "metadata.llmkey": llmKeyHash } },
+          _source: ["text"],
+        },
+      });
+      const hits = resp.body?.hits?.hits ?? [];
+      return hits.map((h) => ({ id: h._id, text: h._source?.text ?? "" }));
+    } catch (err) {
+      const e = err as {
+        statusCode?: number;
+        meta?: { statusCode?: number };
+        body?: { error?: { type?: string } };
+      };
+      const status = e.statusCode ?? e.meta?.statusCode;
+      if (status === 404 || e.body?.error?.type === "index_not_found_exception")
+        return [];
+      throw err;
+    }
+  }
+
+  // Store-wide scan (no llmkey filter): a paged `match_all` search.
+  protected async listAllRecords(
+    limit: number,
+    offset: number,
+  ): Promise<{ id: string; text: string }[]> {
+    const store = (await this.getStore()) as unknown as {
+      client: {
+        search(params: { index: string; body: unknown }): Promise<{
+          body?: {
+            hits?: { hits?: { _id: string; _source?: { text?: string } }[] };
+          };
+        }>;
+      };
+      indexName: string;
+    };
+    try {
+      const resp = await store.client.search({
+        index: store.indexName,
+        body: {
+          from: offset,
+          size: limit,
+          query: { match_all: {} },
           _source: ["text"],
         },
       });
@@ -156,13 +194,17 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
     const client = new Client({
       node: this.osOpts.url,
       ...(this.osOpts.username && this.osOpts.password
-        ? { auth: { username: this.osOpts.username, password: this.osOpts.password } }
+        ? {
+            auth: {
+              username: this.osOpts.username,
+              password: this.osOpts.password,
+            },
+          }
         : {}),
     });
 
-    const { OpenSearchVectorStore } = await import(
-      "@langchain/community/vectorstores/opensearch"
-    );
+    const { OpenSearchVectorStore } =
+      await import("@langchain/community/vectorstores/opensearch");
     const store = new OpenSearchVectorStore(this.osOpts.embeddings, {
       client,
       indexName: this.osOpts.name,

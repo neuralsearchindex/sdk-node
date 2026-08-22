@@ -520,6 +520,43 @@ export abstract class BaseSemanticCache<TFilter = unknown> extends BaseCache {
     );
   }
 
+  /**
+   * List up to `limit` stored records (id + text) across ALL namespaces, starting
+   * at `offset` — the store-wide counterpart to {@link listRecords}, for admin
+   * inspection of a whole collection. No query vector (a metadata/primary scan).
+   * A missing collection returns `[]`. NOT fail-open: surfaces backend errors.
+   */
+  async listAll(
+    limit = 100,
+    offset = 0,
+  ): Promise<{ id: string; text: string }[]> {
+    return this.listAllRecords(limit, offset);
+  }
+
+  /**
+   * Backend-specific store-wide scan (no `llmkey` filter). Overridden per backend
+   * (Milvus `client.query` / pgvector `SELECT` / OpenSearch `match_all`). A missing
+   * collection returns `[]`. Default throws (like {@link listByNamespace}).
+   */
+  protected async listAllRecords(
+    _limit: number,
+    _offset: number,
+  ): Promise<{ id: string; text: string }[]> {
+    throw new Error(
+      `listAllRecords is not implemented for ${this.constructor.name}`,
+    );
+  }
+
+  /**
+   * Delete stored records by store id — no namespace guard (unlike
+   * {@link deleteRecord}). For admin invalidation of entries surfaced by
+   * {@link listAll}. Returns the number of rows removed.
+   */
+  async deleteEntries(ids: string[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    return this.deleteByIds(ids);
+  }
+
   /** Lazily build (and memoize) the vector store, importing the backend driver only on first use. */
   protected getStore(): Promise<SemanticVectorStore<TFilter>> {
     if (this.opts.store)

@@ -69,6 +69,28 @@ export class PgVectorSemanticCache extends BaseSemanticCache<MetadataFilter> {
     return resp.rows.map((r) => ({ id: String(r.id), text: r.content }));
   }
 
+  // Store-wide scan (no llmkey filter): every row, paged. getStore() created the
+  // table, so a fresh cache simply returns nothing.
+  protected async listAllRecords(
+    limit: number,
+    offset: number,
+  ): Promise<{ id: string; text: string }[]> {
+    const store = (await this.getStore()) as unknown as {
+      pool: {
+        query(
+          sql: string,
+          params: unknown[],
+        ): Promise<{ rows: { id: string | number; content: string }[] }>;
+      };
+    };
+    const table = this.pgOpts.name.replace(/[^A-Za-z0-9_]/g, "_");
+    const resp = await store.pool.query(
+      `SELECT id, content FROM "${table}" ORDER BY id LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
+    return resp.rows.map((r) => ({ id: String(r.id), text: r.content }));
+  }
+
   // pgvector's `<=>` under the cosine strategy returns a cosine *distance*
   // (0 = identical, 2 = opposite). Flip it to a similarity in [-1, 1].
   protected normalizeScore(distance: number): number {
@@ -79,10 +101,13 @@ export class PgVectorSemanticCache extends BaseSemanticCache<MetadataFilter> {
     // Create our own pool so we can guarantee the `vector` extension exists before
     // LangChain tries to create the table against it.
     const { default: pg } = await import("pg");
-    const pool = new pg.Pool({ connectionString: this.pgOpts.connectionString });
+    const pool = new pg.Pool({
+      connectionString: this.pgOpts.connectionString,
+    });
     await pool.query("CREATE EXTENSION IF NOT EXISTS vector");
 
-    const { PGVectorStore } = await import("@langchain/community/vectorstores/pgvector");
+    const { PGVectorStore } =
+      await import("@langchain/community/vectorstores/pgvector");
     // `initialize` creates the table (content text, metadata jsonb, vector) if it
     // is missing, so no separate `ensureReady` schema step is needed.
     const store = await PGVectorStore.initialize(this.pgOpts.embeddings, {

@@ -77,7 +77,9 @@ export interface BuildSemanticCacheOptions {
  * caller owns the returned instance. The model cache and any other semantic cache
  * (e.g. an intent cache) are just instances of this with a different collection.
  */
-export function buildSemanticCache(opts: BuildSemanticCacheOptions): BaseSemanticCache {
+export function buildSemanticCache(
+  opts: BuildSemanticCacheOptions,
+): BaseSemanticCache {
   const backend = (opts.backend ?? BACKEND).toLowerCase();
   const shared = {
     embeddings,
@@ -89,8 +91,12 @@ export function buildSemanticCache(opts: BuildSemanticCacheOptions): BaseSemanti
 
   switch (backend) {
     case "pgvector": {
-      if (!DATABASE_URL) throw new Error("DATABASE_URL is required when backend=pgvector");
-      return new PgVectorSemanticCache({ ...shared, connectionString: DATABASE_URL });
+      if (!DATABASE_URL)
+        throw new Error("DATABASE_URL is required when backend=pgvector");
+      return new PgVectorSemanticCache({
+        ...shared,
+        connectionString: DATABASE_URL,
+      });
     }
     case "opensearch":
       return new OpenSearchSemanticCache({
@@ -100,7 +106,11 @@ export function buildSemanticCache(opts: BuildSemanticCacheOptions): BaseSemanti
         password: OPENSEARCH_PASSWORD,
       });
     case "milvus":
-      return new MilvusSemanticCache({ ...shared, url: MILVUS_URL, token: MILVUS_TOKEN });
+      return new MilvusSemanticCache({
+        ...shared,
+        url: MILVUS_URL,
+        token: MILVUS_TOKEN,
+      });
     default:
       throw new Error(`Unknown semantic cache backend: ${backend}`);
   }
@@ -166,8 +176,36 @@ export async function clearSemanticCacheByQueries(
  * Purge an ENTIRE collection — every stored row — keeping the schema. Works for
  * any semantic cache. Not fail-open: a backend error propagates.
  */
-export async function clearSemanticCacheAll(collection: string): Promise<number> {
+export async function clearSemanticCacheAll(
+  collection: string,
+): Promise<number> {
   return buildSemanticCache({ collection }).clearAll();
+}
+
+/**
+ * List stored entries (id + cached prompt text) in a collection, across all
+ * namespaces, paged — the store-wide read path for admin inspection. Works for any
+ * semantic cache backend. Not fail-open: a backend error propagates.
+ */
+export async function listSemanticCache(
+  collection: string,
+  options: { limit?: number; offset?: number } = {},
+): Promise<{ id: string; text: string }[]> {
+  return buildSemanticCache({ collection }).listAll(
+    options.limit ?? 100,
+    options.offset ?? 0,
+  );
+}
+
+/**
+ * Delete specific entries from a collection by their store id (as returned by
+ * {@link listSemanticCache}). Returns the number of rows removed.
+ */
+export async function deleteSemanticCacheEntries(
+  collection: string,
+  ids: string[],
+): Promise<number> {
+  return buildSemanticCache({ collection }).deleteEntries(ids);
 }
 
 /** {@link clearSemanticCacheByQueries} pinned to the model-cache collection. */

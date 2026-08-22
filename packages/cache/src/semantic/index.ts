@@ -35,6 +35,8 @@ export {
   type BuildSemanticCacheOptions,
   clearSemanticCacheByQueries,
   clearSemanticCacheAll,
+  listSemanticCache,
+  deleteSemanticCacheEntries,
   getModelCache,
   setModelCache,
   buildModelCache,

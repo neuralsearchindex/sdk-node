@@ -138,7 +138,39 @@ export class MilvusSemanticCache extends BaseSemanticCache<string> {
       limit,
       consistency_level: "Strong" as unknown as ConsistencyLevelEnum,
     } as QueryReq);
-    const rows = ((resp as { data?: Record<string, unknown>[] }).data) ?? [];
+    const rows = (resp as { data?: Record<string, unknown>[] }).data ?? [];
+    return rows.map((r) => ({
+      id: String(r[primaryField]),
+      text: String(r["langchain_text"] ?? ""),
+    }));
+  }
+
+  // Store-wide scan (no llmkey filter): a match-all `client.query` with paging.
+  // The sentinel `!=` filter matches every row regardless of primary-key type
+  // (empty-string llmkeys included) — Milvus requires a non-empty filter expr.
+  protected async listAllRecords(
+    limit: number,
+    offset: number,
+  ): Promise<{ id: string; text: string }[]> {
+    const store = (await this.getStore()) as unknown as {
+      client: MilvusClient;
+      primaryField?: string;
+    };
+    const name = this.milvusOpts.name;
+    const has = await store.client.hasCollection({ collection_name: name });
+    if (!has.value) return [];
+
+    const primaryField = store.primaryField ?? PRIMARY_FIELD;
+    await store.client.loadCollectionSync({ collection_name: name });
+    const resp = await store.client.query({
+      collection_name: name,
+      filter: 'llmkey != "__local_llm_admin_impossible__"',
+      output_fields: [primaryField, "langchain_text"],
+      limit,
+      offset,
+      consistency_level: "Strong" as unknown as ConsistencyLevelEnum,
+    } as QueryReq);
+    const rows = (resp as { data?: Record<string, unknown>[] }).data ?? [];
     return rows.map((r) => ({
       id: String(r[primaryField]),
       text: String(r["langchain_text"] ?? ""),
@@ -147,7 +179,9 @@ export class MilvusSemanticCache extends BaseSemanticCache<string> {
 
   // Milvus deletes by primary id; the LangChain store has no id-delete helper.
   protected async deleteByIds(ids: string[]): Promise<number> {
-    const store = (await this.getStore()) as unknown as { client: MilvusClient };
+    const store = (await this.getStore()) as unknown as {
+      client: MilvusClient;
+    };
     const resp = await store.client.delete({
       collection_name: this.milvusOpts.name,
       ids,
@@ -204,7 +238,9 @@ export class MilvusSemanticCache extends BaseSemanticCache<string> {
   }
 
   private async createCollectionIfMissing(): Promise<void> {
-    const store = (await this.getStore()) as unknown as { client: MilvusClient };
+    const store = (await this.getStore()) as unknown as {
+      client: MilvusClient;
+    };
     const client = store.client;
     const name = this.milvusOpts.name;
 
@@ -213,7 +249,8 @@ export class MilvusSemanticCache extends BaseSemanticCache<string> {
 
     const { DataType } = await import("@zilliz/milvus2-sdk-node");
     // Probe the real embedding dimension (endpoint/model-accurate).
-    const dim = (await this.milvusOpts.embeddings.embedQuery("dimension probe")).length;
+    const dim = (await this.milvusOpts.embeddings.embedQuery("dimension probe"))
+      .length;
 
     await client.createCollection({
       collection_name: name,
@@ -245,7 +282,8 @@ export class MilvusSemanticCache extends BaseSemanticCache<string> {
         },
         {
           name: "llmkey",
-          description: "uuidv5 (hyphenless) of the model+schema key (namespacing)",
+          description:
+            "uuidv5 (hyphenless) of the model+schema key (namespacing)",
           data_type: DataType.VarChar,
           type_params: { max_length: "64" },
         },
