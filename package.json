@@ -87,6 +87,38 @@
     "./schemas": {
       "types": "./dist/packages/schemas/src/index.d.ts",
       "default": "./dist/packages/schemas/src/index.js"
+    },
+    "./preferences": {
+      "types": "./dist/packages/preferences/src/index.d.ts",
+      "default": "./dist/packages/preferences/src/index.js"
+    },
+    "./logger": {
+      "types": "./dist/packages/logger/src/index.d.ts",
+      "default": "./dist/packages/logger/src/index.js"
+    },
+    "./geo": {
+      "types": "./dist/packages/geo/src/index.d.ts",
+      "default": "./dist/packages/geo/src/index.js"
+    },
+    "./llm": {
+      "types": "./dist/packages/llm/src/index.d.ts",
+      "default": "./dist/packages/llm/src/index.js"
+    },
+    "./cache": {
+      "types": "./dist/packages/cache/src/index.d.ts",
+      "default": "./dist/packages/cache/src/index.js"
+    },
+    "./embeddings": {
+      "types": "./dist/packages/embeddings/src/index.d.ts",
+      "default": "./dist/packages/embeddings/src/index.js"
+    },
+    "./http": {
+      "types": "./dist/packages/http/src/index.d.ts",
+      "default": "./dist/packages/http/src/index.js"
+    },
+    "./auth": {
+      "types": "./dist/packages/auth/src/index.d.ts",
+      "default": "./dist/packages/auth/src/index.js"
     }
   },
   "scripts": {
