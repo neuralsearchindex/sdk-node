@@ -1,6 +1,6 @@
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { initChatModel } from "langchain/chat_models/universal";
-import { getModelCache } from "@local-llm/cache/semantic";
+import { getModelCache } from "../../cache/src/semantic/index.js";
 
 export interface LoadChatModelOptions {
   /** See note above — default OFF. */

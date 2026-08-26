@@ -4,7 +4,7 @@ import { betterAuth, type BetterAuthOptions, type BetterAuthPlugin } from "bette
 import { sso } from "@better-auth/sso";
 import { mikroOrmAdapter } from "better-auth-mikro-orm";
 
-import { getORM } from "./db";
+import { getORM } from "./db.js";
 
 export interface CreateAuthOptions {
   /** Public base URL of THIS app (callback origin). e.g. http://localhost:3000 (web) / :3100 (admin). */
@@ -43,7 +43,9 @@ export interface CreateAuthOptions {
  * Async because it resolves the shared MikroORM instance; callers use top-level await:
  *   export const auth = await createAuth({ ... });
  */
-export async function createAuth(options: CreateAuthOptions) {
+export async function createAuth(
+  options: CreateAuthOptions,
+): Promise<ReturnType<typeof betterAuth>> {
   const orm = await getORM();
 
   return betterAuth({

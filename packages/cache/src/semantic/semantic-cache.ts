@@ -34,7 +34,7 @@ import { keyId } from "../hash.js";
  * optionally {@link ensureReady} / {@link maxPayloadBytes}.
  */
 export interface SemanticCacheOptions {
-  /** Embeddings used to vectorize the user message. Reuse the shared `@local-llm/embeddings` instance. */
+  /** Embeddings used to vectorize the user message. Reuse the shared `@neuralsearchindex/embeddings` instance. */
   embeddings: EmbeddingsInterface;
   /** Backend collection / table / index name that stores `(vector, user message, generations, llmkey)` rows. */
   name: string;

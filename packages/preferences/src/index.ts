@@ -1,12 +1,12 @@
 /**
- * `@local-llm/preferences` — the durable per-user SEARCH PREFERENCE profile:
+ * `@neuralsearchindex/preferences` — the durable per-user SEARCH PREFERENCE profile:
  * the shared source of truth for the agents graph (which writes/reads it via the
  * LangGraph store) and the web app (which lets the user edit it). Dependency-free
  * plain TS + pure helpers, consumed as source by every workspace.
  *
  * Kept as a SINGLE file (no internal relative imports) so it resolves identically
  * under Node's NodeNext (agents/engine) and the web's webpack bundler — mirroring
- * the `@local-llm/geo` precedent.
+ * the `@neuralsearchindex/geo` precedent.
  *
  * Most fields are recency-ordered arrays (most-recent first, deduped, capped at
  * `CAP`) so the profile RETAINS history; the search backfill reads index 0

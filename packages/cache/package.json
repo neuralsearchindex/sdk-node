@@ -1,5 +1,5 @@
 {
-  "name": "@local-llm/cache",
+  "name": "@neuralsearchindex/cache",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -22,7 +22,7 @@
   "dependencies": {
     "@langchain/community": "^1.1.29",
     "@langchain/core": "^1.2.7",
-    "@local-llm/embeddings": "workspace:*",
+    "@neuralsearchindex/embeddings": "workspace:*",
     "@opensearch-project/opensearch": "^3.5.1",
     "@zilliz/milvus2-sdk-node": "^3.0.3",
     "better-sqlite3": "12.11.1",

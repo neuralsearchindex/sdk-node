@@ -1,6 +1,6 @@
-import type { PropertyListing } from "./listing";
-import type { ScoreComponents, ScoredListing } from "./scored-listing";
-import type { SearchIntent } from "./search-intent";
+import type { PropertyListing } from "./listing.js";
+import type { ScoreComponents, ScoredListing } from "./scored-listing.js";
+import type { SearchIntent } from "./search-intent.js";
 
 export interface PhaseTiming {
   phase: string;

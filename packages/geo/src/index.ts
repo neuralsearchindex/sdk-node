@@ -33,7 +33,7 @@ function overpassEndpoint(): string {
 }
 
 function userAgent(): string {
-  return process.env.SCRAPER_USER_AGENT || "local-llm/1.0";
+  return process.env.SCRAPER_USER_AGENT || "neuralsearchindex/1.0";
 }
 
 const RETRYABLE_HTTP = /HTTP (408|429|5\d\d)\b/;

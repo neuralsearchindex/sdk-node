@@ -10,7 +10,7 @@ import { randomUUID } from "node:crypto";
 
 import { MikroORM } from "@mikro-orm/postgresql";
 
-import { authEntities, SsoProvider } from "./entities";
+import { authEntities, SsoProvider } from "./entities.js";
 
 function strip(u: string): string {
   return u.endsWith("/") ? u.slice(0, -1) : u;

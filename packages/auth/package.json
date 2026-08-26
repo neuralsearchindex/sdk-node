@@ -1,5 +1,5 @@
 {
-  "name": "@local-llm/auth",
+  "name": "@neuralsearchindex/auth",
   "version": "0.0.1",
   "private": true,
   "type": "module",

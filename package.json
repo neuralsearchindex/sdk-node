@@ -1,0 +1,141 @@
+{
+  "name": "@neuralsearchindex/sdk-node",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "packageManager": "pnpm@10.6.3",
+  "description": "Consolidated shared SDK for NeuralSearchIndex apps (logger, cache, embeddings, geo, http, llm, preferences, schemas, auth).",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./auth/server": {
+      "types": "./dist/packages/auth/src/server.d.ts",
+      "default": "./dist/packages/auth/src/server.js"
+    },
+    "./auth/client": {
+      "types": "./dist/packages/auth/src/client.d.ts",
+      "default": "./dist/packages/auth/src/client.js"
+    },
+    "./auth/db": {
+      "types": "./dist/packages/auth/src/db.d.ts",
+      "default": "./dist/packages/auth/src/db.js"
+    },
+    "./auth/entities": {
+      "types": "./dist/packages/auth/src/entities.d.ts",
+      "default": "./dist/packages/auth/src/entities.js"
+    },
+    "./auth/provider": {
+      "types": "./dist/packages/auth/src/provider.d.ts",
+      "default": "./dist/packages/auth/src/provider.js"
+    },
+    "./logger/hono": {
+      "types": "./dist/packages/logger/src/hono.d.ts",
+      "default": "./dist/packages/logger/src/hono.js"
+    },
+    "./semantic": {
+      "types": "./dist/packages/cache/src/semantic/index.d.ts",
+      "default": "./dist/packages/cache/src/semantic/index.js"
+    },
+    "./schemas/property-type": {
+      "types": "./dist/packages/schemas/src/property-type.d.ts",
+      "default": "./dist/packages/schemas/src/property-type.js"
+    },
+    "./schemas/url": {
+      "types": "./dist/packages/schemas/src/url.d.ts",
+      "default": "./dist/packages/schemas/src/url.js"
+    },
+    "./schemas/search-event": {
+      "types": "./dist/packages/schemas/src/search-event.d.ts",
+      "default": "./dist/packages/schemas/src/search-event.js"
+    },
+    "./cache/redis-cache-plugin": {
+      "types": "./dist/packages/cache/src/redis-cache-plugin.d.ts",
+      "default": "./dist/packages/cache/src/redis-cache-plugin.js"
+    },
+    "./cache/sqlite-cache-plugin": {
+      "types": "./dist/packages/cache/src/sqlite-cache-plugin.d.ts",
+      "default": "./dist/packages/cache/src/sqlite-cache-plugin.js"
+    },
+    "./cache/memory-cache-plugin": {
+      "types": "./dist/packages/cache/src/memory-cache-plugin.d.ts",
+      "default": "./dist/packages/cache/src/memory-cache-plugin.js"
+    },
+    "./hash": {
+      "types": "./dist/packages/cache/src/hash.d.ts",
+      "default": "./dist/packages/cache/src/hash.js"
+    },
+    "./http/proxy-fetch": {
+      "types": "./dist/packages/http/src/proxy-fetch.d.ts",
+      "default": "./dist/packages/http/src/proxy-fetch.js"
+    },
+    "./http/accept-language": {
+      "types": "./dist/packages/http/src/accept-language.d.ts",
+      "default": "./dist/packages/http/src/accept-language.js"
+    },
+    "./http/toWebHeaders": {
+      "types": "./dist/packages/http/src/toWebHeaders.d.ts",
+      "default": "./dist/packages/http/src/toWebHeaders.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsc --noCheck -p tsconfig.json",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@better-auth/sso": "^1.6.28",
+    "@langchain/cohere": "^1.1.0",
+    "@langchain/community": "^1.1.29",
+    "@langchain/core": "^1.2.7",
+    "@langchain/openai": "^1.5.7",
+    "@mikro-orm/core": "^6.6.2",
+    "@mikro-orm/postgresql": "^6.6.2",
+    "@opensearch-project/opensearch": "^3.5.1",
+    "@zilliz/milvus2-sdk-node": "^3.0.3",
+    "better-auth": "^1.6.28",
+    "better-auth-mikro-orm": "^0.5.0",
+    "better-sqlite3": "12.11.1",
+    "ioredis": "^5.8.2",
+    "langchain": "^1.5.8",
+    "pg": "^8.16.3",
+    "pino": "^9.5.0",
+    "pino-pretty": "^13.0.0",
+    "server-only": "^0.0.1",
+    "undici": "^7.4.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22",
+    "@types/pg": "^8.11.10",
+    "@types/uuid": "^10.0.0",
+    "hono": "^4.12.28",
+    "tsc-alias": "^1.8",
+    "tsup": "^8.5.0",
+    "typescript": "^5"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "protobufjs"
+    ],
+    "overrides": {
+      "@langchain/core": "^1.2.7",
+      "@modelcontextprotocol/sdk": "1.17.5",
+      "zod": "3.25.76",
+      "better-auth>zod": "^4.3.6",
+      "@better-auth/core>zod": "^4.3.6",
+      "@better-auth/sso>zod": "^4.3.6",
+      "@better-auth/i18n>zod": "^4.3.6",
+      "@better-auth/expo>zod": "^4.3.6"
+    }
+  }
+}

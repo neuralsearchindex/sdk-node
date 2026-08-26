@@ -1,5 +1,5 @@
 import type { BaseCache } from "@langchain/core/caches";
-import { embeddings } from "@local-llm/embeddings";
+import { embeddings } from "../../../embeddings/src/index.js";
 
 import { MilvusSemanticCache } from "./milvus-semantic-cache.js";
 import { OpenSearchSemanticCache } from "./opensearch-semantic-cache.js";
@@ -16,7 +16,7 @@ import type {
  * from env at module load (like the rest of the agent's config).
  *
  * This is a SEMANTIC LLM cache and is DIFFERENT from the exact-hash key/value
- * cache in `@local-llm/cache` — the two layers are independent and can both be on.
+ * cache in `@neuralsearchindex/cache` — the two layers are independent and can both be on.
  *
  *   MODEL_CACHE_ENABLED               "true" turns it on (default OFF).
  *   MODEL_CACHE_BACKEND               vector store: "milvus" (default) | "pgvector" | "opensearch".

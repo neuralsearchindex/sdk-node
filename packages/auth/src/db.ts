@@ -2,7 +2,7 @@ import "server-only";
 
 import { MikroORM } from "@mikro-orm/postgresql";
 
-import { authEntities } from "./entities";
+import { authEntities } from "./entities.js";
 
 /**
  * A single MikroORM instance for better-auth's tables, against the SAME shared

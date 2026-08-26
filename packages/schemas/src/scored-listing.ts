@@ -1,4 +1,4 @@
-import type { PropertyListing } from "./listing";
+import type { PropertyListing } from "./listing.js";
 
 /**
  * Per-engine breakdown of `score`, for explainability ("why 74%?").

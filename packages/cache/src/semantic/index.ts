@@ -1,11 +1,11 @@
 /**
- * `@local-llm/cache/semantic` — the semantic cache module: a LangChain `BaseCache`
+ * `@neuralsearchindex/cache/semantic` — the semantic cache module: a LangChain `BaseCache`
  * with pluggable vector-store backends (Milvus, pgvector, OpenSearch), a generic
  * `buildSemanticCache` factory, and the env-gated model-cache instance built on it.
  *
  * Lives behind the `./semantic` subpath so the heavy driver chains
  * (`@zilliz/milvus2-sdk-node`, `pg`, `@opensearch-project/opensearch`,
- * `@langchain/community`) never reach consumers of the exact-hash `@local-llm/cache`
+ * `@langchain/community`) never reach consumers of the exact-hash `@neuralsearchindex/cache`
  * root — the two layers are independent.
  */
 export {

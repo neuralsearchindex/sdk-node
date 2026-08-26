@@ -1,5 +1,5 @@
 {
-  "name": "@local-llm/llm",
+  "name": "@neuralsearchindex/llm",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@langchain/core": "^1.2.7",
-    "@local-llm/cache": "workspace:*",
+    "@neuralsearchindex/cache": "workspace:*",
     "langchain": "^1.5.8"
   },
   "devDependencies": {
