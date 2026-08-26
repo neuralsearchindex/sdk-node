@@ -5,15 +5,15 @@
  * Node-only (`auth/server`, `auth/db`) and browser-only (`auth/client`) surfaces
  * are intentionally NOT re-exported here — import them from their subpaths.
  */
-export * from "../packages/logger/src/index.js";
-export * from "../packages/cache/src/index.js";
-export * from "../packages/embeddings/src/index.js";
-export * from "../packages/geo/src/index.js";
-export * from "../packages/http/src/index.js";
-export * from "../packages/llm/src/index.js";
-export * from "../packages/preferences/src/index.js";
-export * from "../packages/schemas/src/index.js";
+export * from "./logger/index.js";
+export * from "./cache/index.js";
+export * from "./embeddings/index.js";
+export * from "./geo/index.js";
+export * from "./http/index.js";
+export * from "./llm/index.js";
+export * from "./preferences/index.js";
+export * from "./schemas/index.js";
 
 // From auth, only the platform-neutral parts (entities + provider helpers).
-export * from "../packages/auth/src/entities.js";
-export * from "../packages/auth/src/provider.js";
+export * from "./auth/entities.js";
+export * from "./auth/provider.js";

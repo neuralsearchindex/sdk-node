@@ -13,112 +13,112 @@
   "types": "./dist/src/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./auth/server": {
-      "types": "./dist/packages/auth/src/server.d.ts",
-      "default": "./dist/packages/auth/src/server.js"
+      "types": "./dist/auth/server.d.ts",
+      "default": "./dist/auth/server.js"
     },
     "./auth/client": {
-      "types": "./dist/packages/auth/src/client.d.ts",
-      "default": "./dist/packages/auth/src/client.js"
+      "types": "./dist/auth/client.d.ts",
+      "default": "./dist/auth/client.js"
     },
     "./auth/db": {
-      "types": "./dist/packages/auth/src/db.d.ts",
-      "default": "./dist/packages/auth/src/db.js"
+      "types": "./dist/auth/db.d.ts",
+      "default": "./dist/auth/db.js"
     },
     "./auth/entities": {
-      "types": "./dist/packages/auth/src/entities.d.ts",
-      "default": "./dist/packages/auth/src/entities.js"
+      "types": "./dist/auth/entities.d.ts",
+      "default": "./dist/auth/entities.js"
     },
     "./auth/provider": {
-      "types": "./dist/packages/auth/src/provider.d.ts",
-      "default": "./dist/packages/auth/src/provider.js"
+      "types": "./dist/auth/provider.d.ts",
+      "default": "./dist/auth/provider.js"
     },
     "./logger/hono": {
-      "types": "./dist/packages/logger/src/hono.d.ts",
-      "default": "./dist/packages/logger/src/hono.js"
+      "types": "./dist/logger/hono.d.ts",
+      "default": "./dist/logger/hono.js"
     },
     "./semantic": {
-      "types": "./dist/packages/cache/src/semantic/index.d.ts",
-      "default": "./dist/packages/cache/src/semantic/index.js"
+      "types": "./dist/cache/semantic/index.d.ts",
+      "default": "./dist/cache/semantic/index.js"
     },
     "./schemas/property-type": {
-      "types": "./dist/packages/schemas/src/property-type.d.ts",
-      "default": "./dist/packages/schemas/src/property-type.js"
+      "types": "./dist/schemas/property-type.d.ts",
+      "default": "./dist/schemas/property-type.js"
     },
     "./schemas/url": {
-      "types": "./dist/packages/schemas/src/url.d.ts",
-      "default": "./dist/packages/schemas/src/url.js"
+      "types": "./dist/schemas/url.d.ts",
+      "default": "./dist/schemas/url.js"
     },
     "./schemas/search-event": {
-      "types": "./dist/packages/schemas/src/search-event.d.ts",
-      "default": "./dist/packages/schemas/src/search-event.js"
+      "types": "./dist/schemas/search-event.d.ts",
+      "default": "./dist/schemas/search-event.js"
     },
     "./cache/redis-cache-plugin": {
-      "types": "./dist/packages/cache/src/redis-cache-plugin.d.ts",
-      "default": "./dist/packages/cache/src/redis-cache-plugin.js"
+      "types": "./dist/cache/redis-cache-plugin.d.ts",
+      "default": "./dist/cache/redis-cache-plugin.js"
     },
     "./cache/sqlite-cache-plugin": {
-      "types": "./dist/packages/cache/src/sqlite-cache-plugin.d.ts",
-      "default": "./dist/packages/cache/src/sqlite-cache-plugin.js"
+      "types": "./dist/cache/sqlite-cache-plugin.d.ts",
+      "default": "./dist/cache/sqlite-cache-plugin.js"
     },
     "./cache/memory-cache-plugin": {
-      "types": "./dist/packages/cache/src/memory-cache-plugin.d.ts",
-      "default": "./dist/packages/cache/src/memory-cache-plugin.js"
+      "types": "./dist/cache/memory-cache-plugin.d.ts",
+      "default": "./dist/cache/memory-cache-plugin.js"
     },
     "./hash": {
-      "types": "./dist/packages/cache/src/hash.d.ts",
-      "default": "./dist/packages/cache/src/hash.js"
+      "types": "./dist/cache/hash.d.ts",
+      "default": "./dist/cache/hash.js"
     },
     "./http/proxy-fetch": {
-      "types": "./dist/packages/http/src/proxy-fetch.d.ts",
-      "default": "./dist/packages/http/src/proxy-fetch.js"
+      "types": "./dist/http/proxy-fetch.d.ts",
+      "default": "./dist/http/proxy-fetch.js"
     },
     "./http/accept-language": {
-      "types": "./dist/packages/http/src/accept-language.d.ts",
-      "default": "./dist/packages/http/src/accept-language.js"
+      "types": "./dist/http/accept-language.d.ts",
+      "default": "./dist/http/accept-language.js"
     },
     "./http/toWebHeaders": {
-      "types": "./dist/packages/http/src/toWebHeaders.d.ts",
-      "default": "./dist/packages/http/src/toWebHeaders.js"
+      "types": "./dist/http/toWebHeaders.d.ts",
+      "default": "./dist/http/toWebHeaders.js"
     },
     "./schemas": {
-      "types": "./dist/packages/schemas/src/index.d.ts",
-      "default": "./dist/packages/schemas/src/index.js"
+      "types": "./dist/schemas/index.d.ts",
+      "default": "./dist/schemas/index.js"
     },
     "./preferences": {
-      "types": "./dist/packages/preferences/src/index.d.ts",
-      "default": "./dist/packages/preferences/src/index.js"
+      "types": "./dist/preferences/index.d.ts",
+      "default": "./dist/preferences/index.js"
     },
     "./logger": {
-      "types": "./dist/packages/logger/src/index.d.ts",
-      "default": "./dist/packages/logger/src/index.js"
+      "types": "./dist/logger/index.d.ts",
+      "default": "./dist/logger/index.js"
     },
     "./geo": {
-      "types": "./dist/packages/geo/src/index.d.ts",
-      "default": "./dist/packages/geo/src/index.js"
+      "types": "./dist/geo/index.d.ts",
+      "default": "./dist/geo/index.js"
     },
     "./llm": {
-      "types": "./dist/packages/llm/src/index.d.ts",
-      "default": "./dist/packages/llm/src/index.js"
+      "types": "./dist/llm/index.d.ts",
+      "default": "./dist/llm/index.js"
     },
     "./cache": {
-      "types": "./dist/packages/cache/src/index.d.ts",
-      "default": "./dist/packages/cache/src/index.js"
+      "types": "./dist/cache/index.d.ts",
+      "default": "./dist/cache/index.js"
     },
     "./embeddings": {
-      "types": "./dist/packages/embeddings/src/index.d.ts",
-      "default": "./dist/packages/embeddings/src/index.js"
+      "types": "./dist/embeddings/index.d.ts",
+      "default": "./dist/embeddings/index.js"
     },
     "./http": {
-      "types": "./dist/packages/http/src/index.d.ts",
-      "default": "./dist/packages/http/src/index.js"
+      "types": "./dist/http/index.d.ts",
+      "default": "./dist/http/index.js"
     },
     "./auth": {
-      "types": "./dist/packages/auth/src/index.d.ts",
-      "default": "./dist/packages/auth/src/index.js"
+      "types": "./dist/auth/index.d.ts",
+      "default": "./dist/auth/index.js"
     }
   },
   "scripts": {

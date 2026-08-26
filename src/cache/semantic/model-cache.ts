@@ -1,5 +1,5 @@
 import type { BaseCache } from "@langchain/core/caches";
-import { embeddings } from "../../../embeddings/src/index.js";
+import { embeddings } from "../../embeddings/index.js";
 
 import { MilvusSemanticCache } from "./milvus-semantic-cache.js";
 import { OpenSearchSemanticCache } from "./opensearch-semantic-cache.js";
