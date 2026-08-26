@@ -83,6 +83,10 @@
     "./http/toWebHeaders": {
       "types": "./dist/packages/http/src/toWebHeaders.d.ts",
       "default": "./dist/packages/http/src/toWebHeaders.js"
+    },
+    "./schemas": {
+      "types": "./dist/packages/schemas/src/index.d.ts",
+      "default": "./dist/packages/schemas/src/index.js"
     }
   },
   "scripts": {
