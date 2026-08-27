@@ -79,6 +79,10 @@ export interface AccountRow {
   accountId: string;
   providerId: string;
   userId: string;
+  // SSO-linked accounts carry the IdP issuer (better-auth's @better-auth/sso plugin
+  // writes it on the OIDC/SAML callback). Nullable — password/credential accounts
+  // have no issuer.
+  issuer?: string | null;
   accessToken?: string | null;
   refreshToken?: string | null;
   idToken?: string | null;
@@ -98,6 +102,7 @@ export const Account = new EntitySchema<AccountRow>({
     accountId: { type: "string" },
     providerId: { type: "string" },
     userId: { type: "string" },
+    issuer: { type: "string", nullable: true },
     accessToken: { type: "text", nullable: true },
     refreshToken: { type: "text", nullable: true },
     idToken: { type: "text", nullable: true },
