@@ -3,6 +3,7 @@ import "server-only";
 import { MikroORM } from "@mikro-orm/postgresql";
 
 import { authEntities } from "./entities.js";
+import { pgSslOptions } from "./pg-ssl.js";
 
 /**
  * A single MikroORM instance for better-auth's tables, against the SAME shared
@@ -23,7 +24,7 @@ export function getORM(): Promise<MikroORM> {
     throw new Error("DATABASE_URL is required for better-auth (MikroORM adapter).");
   }
   globalForOrm.__authOrm ??= MikroORM.init({
-    clientUrl: process.env.DATABASE_URL,
+    ...pgSslOptions(process.env.DATABASE_URL),
     entities: authEntities,
     // Entities are listed explicitly (EntitySchema), so no filesystem discovery.
     discovery: { warnWhenNoEntities: false },

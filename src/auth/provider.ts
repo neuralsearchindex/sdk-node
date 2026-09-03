@@ -11,6 +11,7 @@ import { randomUUID } from "node:crypto";
 import { MikroORM } from "@mikro-orm/postgresql";
 
 import { authEntities, SsoProvider } from "./entities.js";
+import { pgSslOptions } from "./pg-ssl.js";
 
 function strip(u: string): string {
   return u.endsWith("/") ? u.slice(0, -1) : u;
@@ -66,7 +67,7 @@ export function buildKeycloakOidcConfig(input: KeycloakOidcInput): string {
  */
 export async function runAuthMigrate(databaseUrl: string): Promise<void> {
   const orm = await MikroORM.init({
-    clientUrl: databaseUrl,
+    ...pgSslOptions(databaseUrl),
     entities: authEntities,
     discovery: { warnWhenNoEntities: false },
     allowGlobalContext: true,
@@ -103,7 +104,7 @@ export interface UpsertSsoProviderInput {
 export async function upsertSsoProvider(input: UpsertSsoProviderInput): Promise<void> {
   const { databaseUrl, providerId, issuer, domain, oidcConfig } = input;
   const orm = await MikroORM.init({
-    clientUrl: databaseUrl,
+    ...pgSslOptions(databaseUrl),
     entities: authEntities,
     discovery: { warnWhenNoEntities: false },
     allowGlobalContext: true,
