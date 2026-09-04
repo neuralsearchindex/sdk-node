@@ -7,12 +7,18 @@ interface QueueLike {
   getJobCounts: (...states: string[]) => Promise<Record<string, number>>;
 }
 
+interface JobLike {
+  queueName?: string;
+}
 interface JobsManagerLike {
   /** Fires for every registered BullMQ queue (engine/scraper/ingestion jobs-manager). */
   onAdded: (cb: (job: unknown, queue: QueueLike) => void) => void;
-  /** Wraps every processor — same seam as track-execution-time.middleware.ts. */
+  /**
+   * Wraps every processor — same seam as track-execution-time.middleware.ts. The
+   * manager invokes `fn(job, next)` and the middleware forwards `next(job)`.
+   */
   addMiddleware?: (
-    fn: (ctx: { queueName: string }, next: () => Promise<void>) => Promise<void>,
+    fn: (job: JobLike, next: (job: JobLike) => Promise<unknown>) => Promise<unknown>,
   ) => void;
 }
 
@@ -59,13 +65,15 @@ export function collectBullmqMetrics(jobsManager: JobsManagerLike): void {
     name: "bullmq_failed_total", help: "BullMQ jobs failed", labelNames: ["queue"], registers: [register],
   });
 
-  jobsManager.addMiddleware?.(async (ctx, next) => {
-    const end = duration.startTimer({ queue: ctx.queueName });
+  jobsManager.addMiddleware?.(async (job, next) => {
+    const queue = job?.queueName ?? "unknown";
+    const end = duration.startTimer({ queue });
     try {
-      await next();
-      completed.inc({ queue: ctx.queueName });
+      const result = await next(job);
+      completed.inc({ queue });
+      return result;
     } catch (e) {
-      failed.inc({ queue: ctx.queueName });
+      failed.inc({ queue });
       throw e;
     } finally {
       end();
