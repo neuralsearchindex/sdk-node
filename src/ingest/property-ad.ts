@@ -372,7 +372,10 @@ export const propertyAdSchema = z
       .optional()
       .default({})
       .describe("Rent-specific fields (only when listingType is 'rent')."),
-    agent: agentSchema.partial().describe("Information about agent.")
+    agent: agentSchema.partial().describe("Information about agent."),
+    pageContent: optionalString().describe(
+      "Full listing detail page as clean Markdown (scraper-rendered). Optional dense-embedding source; chunked into page_content_chunks at ingest."
+    )
   })
   .strict()
   .describe(

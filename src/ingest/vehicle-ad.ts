@@ -141,7 +141,11 @@ export const vehicleAdSchema = z
     sourceDomain: str,
     searchQuery: str,
     publishedAt: str,
-    updatedAt: str
+    updatedAt: str,
+
+    // Full listing detail page as clean Markdown (scraper-rendered). Optional
+    // dense-embedding source; chunked into page_content_chunks at ingest.
+    pageContent: z.string().optional().default("")
   })
   .passthrough();
 

@@ -7,8 +7,9 @@ import { type LatLon, pointWkt } from "../geo/index.js";
 
 import { Domain } from "../schemas/domain.js";
 import type { ImageStruct, SparseVector } from "./ad-to-row.js";
+import { MAX_TEXT_CHUNKS, splitMarkdown } from "./chunk.js";
 import { listingId } from "./listing-id.js";
-import type { DomainDescriptor, DomainIngest, IngestContext } from "./types.js";
+import type { DomainDescriptor, DomainIngest, IngestContext, IngestOptions } from "./types.js";
 import { canonicalizeUrl } from "./url.js";
 import { type VehicleAd, vehicleAdSchema } from "./vehicle-ad.js";
 
@@ -119,7 +120,14 @@ export function vehicleAdIndexMapping(): Record<string, unknown> {
       updated_at: { type: "keyword" },
       scraped_at: { type: "long" },
 
-      dense_vector: knnVector(DENSE_DIM),
+      page_content_chunks: {
+        type: "nested",
+        max_capacity: MAX_TEXT_CHUNKS,
+        properties: {
+          text: { type: "text", index: false },
+          chunk_vector: knnVector(DENSE_DIM)
+        }
+      },
       sparse_vector: { type: "rank_features" },
       images: {
         type: "nested",
@@ -227,9 +235,23 @@ export function vehicleAdText(ad: VehicleAd): string {
     .slice(0, MAX_TEXT_CHARS);
 }
 
+/** Dense-chunk source for a car: full `pageContent` when selected, else the composite. */
+export function vehicleAdDenseSource(ad: VehicleAd, opts?: IngestOptions): string {
+  if (opts?.textEmbeddingSource === "pageContent") {
+    const page = typeof ad.pageContent === "string" ? ad.pageContent.trim() : "";
+    if (page) return page;
+  }
+  return vehicleAdText(ad);
+}
+
+/** Markdown-aware dense chunks for a car, capped by `opts.maxTextChunks`. */
+export function vehicleAdTextChunks(ad: VehicleAd, opts?: IngestOptions): Promise<string[]> {
+  return splitMarkdown(vehicleAdDenseSource(ad, opts), opts?.maxTextChunks);
+}
+
 /** Map a validated VehicleAd + enrichment into the `vehicle_ads` `_source` document. */
 export function vehicleAdToRow(ad: VehicleAd, ctx: IngestContext): Record<string, unknown> {
-  const { geo, dense, sparse, images, now } = ctx;
+  const { geo, chunks, sparse, images, now } = ctx;
   const address = ad.address ?? {};
   const price = ad.price ?? {};
 
@@ -306,9 +328,18 @@ export function vehicleAdToRow(ad: VehicleAd, ctx: IngestContext): Record<string
     updated_at: s(ad.updatedAt, 64),
     scraped_at: now,
 
-    // Best-effort, like sparse: omit dense_vector when the text encoder is
-    // off/unreachable (null/empty) — an empty knn_vector is an invalid write.
-    ...(dense && dense.length ? { dense_vector: dense } : {}),
+    // Nested per-chunk text vectors (text analogue of nested image vectors).
+    // Per chunk, omit chunk_vector when the encoder was off (blind chunk); omit
+    // the whole field when there are no chunks.
+    ...(chunks.length
+      ? {
+          page_content_chunks: chunks.map((c) =>
+            c.chunk_vector && c.chunk_vector.length
+              ? { text: s(c.text, 4000), chunk_vector: c.chunk_vector }
+              : { text: s(c.text, 4000) }
+          )
+        }
+      : {}),
     // Best-effort: omit the sparse field entirely when unavailable rather than
     // writing an empty/zero vector. Stores treat its absence as "no sparse leg".
     ...(sparse ? { sparse_vector: sparse as SparseVector } : {}),
@@ -323,6 +354,7 @@ const ingest: DomainIngest = {
   },
   id: (ad) => vehicleAdId(ad as VehicleAd),
   text: (ad) => vehicleAdText(ad as VehicleAd),
+  textChunks: (ad, opts) => vehicleAdTextChunks(ad as VehicleAd, opts),
   imageUrls: (ad) => vehicleImageUrls(ad as VehicleAd),
   locationHint: (ad) => {
     const address = (ad as VehicleAd).address ?? {};

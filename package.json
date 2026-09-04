@@ -136,6 +136,7 @@
     "@langchain/community": "^1.1.29",
     "@langchain/core": "^1.2.7",
     "@langchain/openai": "^1.5.7",
+    "@langchain/textsplitters": "^1.0.1",
     "@mikro-orm/core": "^6.6.2",
     "@mikro-orm/postgresql": "^6.6.2",
     "@opensearch-project/opensearch": "^3.5.1",

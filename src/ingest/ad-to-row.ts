@@ -23,6 +23,17 @@ export interface ImageStruct {
   image_vector?: number[];
 }
 
+export interface TextChunk {
+  /** The chunk's source markdown (stored, `index: false`). */
+  text: string;
+  /**
+   * Dense embedding of the chunk. OMITTED (not `[]`) when the text encoder is
+   * off/unreachable — the "blind chunk" analogue of a blind photo: the chunk text
+   * is still stored, but no invalid empty `knn_vector` is written.
+   */
+  chunk_vector?: number[];
+}
+
 export function adId(ad: PropertyAd): string {
   const raw = ad.sourceUrl?.trim();
   const seed = (raw && (canonicalizeUrl(raw) ?? raw)) || `${ad.referenceNumber ?? ""}:${ad.name ?? ""}`;
@@ -67,7 +78,7 @@ function featuresFromEquipment(equipment: unknown): Array<{ label: string; value
 export function propertyAdToRow(
   ad: PropertyAd,
   geo: LatLon | null,
-  dense: number[] | null,
+  chunks: TextChunk[],
   sparse: SparseVector | null,
   images: ImageStruct[],
   scrapedAt: number
@@ -134,10 +145,19 @@ export function propertyAdToRow(
     search_query: "",
     scraped_at: scrapedAt,
     location: geo ? pointWkt(geo.lat, geo.lon) : null,
-    // Best-effort, like sparse: omit dense_vector entirely when the text encoder
-    // is off/unreachable (null/empty). An empty knn_vector is an invalid write;
-    // its absence indexes the doc text-only (still lexically searchable).
-    ...(dense && dense.length ? { dense_vector: dense } : {}),
+    // Nested per-chunk text vectors (the text analogue of nested per-photo image
+    // vectors). Omit the field entirely when there are no chunks; per chunk, omit
+    // chunk_vector when the text encoder was off (blind chunk) — an empty
+    // knn_vector is an invalid write; keeping the text still indexes it lexically.
+    ...(chunks.length
+      ? {
+          page_content_chunks: chunks.map((c) =>
+            c.chunk_vector && c.chunk_vector.length
+              ? { text: s(c.text, 4000), chunk_vector: c.chunk_vector }
+              : { text: s(c.text, 4000) }
+          )
+        }
+      : {}),
     // Best-effort: omit the sparse field entirely when unavailable rather than
     // writing an empty/zero vector. Stores treat its absence as "no sparse leg".
     ...(sparse ? { sparse_vector: sparse } : {}),

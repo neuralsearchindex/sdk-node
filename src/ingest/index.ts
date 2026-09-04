@@ -13,15 +13,26 @@
 export { Domain, ResultMarker } from "../schemas/domain.js";
 
 // The ingest contract types.
-export type { DomainIngest, DomainDescriptor, IngestContext, LocationHint } from "./types.js";
+export type {
+  DomainIngest,
+  DomainDescriptor,
+  IngestContext,
+  LocationHint,
+  IngestOptions,
+  TextEmbeddingSource
+} from "./types.js";
+
+// Markdown-aware chunking for the dense leg.
+export { splitMarkdown, CHUNK_SIZE, CHUNK_OVERLAP, MAX_TEXT_CHUNKS } from "./chunk.js";
 
 // The domain registry / resolvers (each descriptor keeps `.indexName`).
 export { resolveDomain, resolveDomainByIndex, DEFAULT_DOMAIN, ALL_DOMAINS, isDomain } from "./registry.js";
 export { realEstateDomain } from "./real-estate.js";
 export { vehiclesDomain } from "./vehicles.js";
 
-// Canonical document value types (ImageStruct: OPTIONAL image_vector = "blind photo").
-export type { ImageStruct, SparseVector } from "./ad-to-row.js";
+// Canonical document value types (ImageStruct: OPTIONAL image_vector = "blind photo";
+// TextChunk: OPTIONAL chunk_vector = "blind chunk").
+export type { ImageStruct, SparseVector, TextChunk } from "./ad-to-row.js";
 export { adId, propertyAdToRow } from "./ad-to-row.js";
 
 // Per-domain validation schemas + inferred types.
@@ -66,9 +77,10 @@ export {
   vehicleAdIndexBody,
   vehicleAdId,
   vehicleAdText,
+  vehicleAdTextChunks,
   vehicleAdToRow
 } from "./vehicles.js";
-export { propertyAdText, MAX_TEXT_CHARS } from "./text.js";
+export { propertyAdText, propertyAdTextChunks, propertyAdDenseSource, MAX_TEXT_CHARS } from "./text.js";
 
 // Stable id + url canonicalization.
 export { listingId, LISTING_ID_NAMESPACE } from "./listing-id.js";

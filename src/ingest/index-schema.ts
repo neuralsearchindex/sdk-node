@@ -3,6 +3,7 @@
 // `ImageStruct` (required image_vector) is intentionally NOT re-declared here —
 // the canonical ImageStruct (with OPTIONAL image_vector, the "blind photo"
 // contract) lives in `./ad-to-row.ts` and is the one the barrel exports.
+import { MAX_TEXT_CHUNKS } from "./chunk.js";
 
 export const PROPERTY_AD_INDEX = "property_ads";
 
@@ -85,7 +86,17 @@ export function propertyAdIndexMapping(): Record<string, unknown> {
 
       location: { type: "geo_point" },
 
-      dense_vector: knnVector(DENSE_DIM),
+      // Nested per-chunk text vectors (the text analogue of nested per-photo image
+      // vectors). Queried with a nested kNN + score_mode:"max" — best-matching
+      // chunk wins. Replaces the former single `dense_vector`, removing MAX_TEXT_CHARS.
+      page_content_chunks: {
+        type: "nested",
+        max_capacity: MAX_TEXT_CHUNKS,
+        properties: {
+          text: { type: "text", index: false },
+          chunk_vector: knnVector(DENSE_DIM)
+        }
+      },
       sparse_vector: { type: "rank_features" },
       images: {
         type: "nested",

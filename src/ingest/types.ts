@@ -9,7 +9,19 @@
 import type { GeocodableAddress, LatLon } from "../geo/index.js";
 
 import type { Domain } from "../schemas/domain.js";
-import type { ImageStruct, SparseVector } from "./ad-to-row.js";
+import type { ImageStruct, SparseVector, TextChunk } from "./ad-to-row.js";
+
+/** Which text a listing's DENSE chunk vectors are built from (admin-selectable per pipeline).
+ *  The SPARSE/lexical leg always uses the description composite, regardless of this. */
+export type TextEmbeddingSource = "description" | "pageContent";
+
+/** Per-run ingest options resolved from the pipeline config. */
+export interface IngestOptions {
+  /** Source for the dense chunk vectors. Defaults to `"description"`. */
+  textEmbeddingSource?: TextEmbeddingSource;
+  /** Cap on the number of chunks per listing. Defaults to `MAX_TEXT_CHUNKS` (20). */
+  maxTextChunks?: number;
+}
 
 /**
  * Where a scraped ad's coordinates come from: an explicit `coords` on the ad
@@ -24,9 +36,11 @@ export interface LocationHint {
 /** Per-ad enrichment the ingest service has computed before mapping to a document. */
 export interface IngestContext {
   geo: LatLon | null;
-  /** Best-effort: null/empty when the text encoder is off/unreachable. Document
-   *  builders omit the dense_vector field entirely in that case (text-only). */
-  dense: number[] | null;
+  /** The listing's dense text chunks (each with its own vector). A chunk whose
+   *  vector is absent is a "blind chunk" (text encoder off/unreachable) — the row
+   *  builder keeps its text but omits the vector, indexing the doc text-only. An
+   *  empty array ⇒ no dense leg at all. Replaces the former single `dense` vector. */
+  chunks: TextChunk[];
   /** Best-effort: null when the embedding provider has no sparse route. Document
    *  builders omit the sparse field entirely in that case (dense-only). */
   sparse: SparseVector | null;
@@ -47,8 +61,12 @@ export interface DomainIngest {
   parse(raw: unknown): Record<string, unknown> | null;
   /** Stable document id for the ad (dedupes re-scrapes of the same listing). */
   id(ad: Record<string, unknown>): string;
-  /** The text to embed (dense + sparse) for this ad. */
+  /** The description composite — the SPARSE (lexical) leg's source. Always the
+   *  structured composite, independent of `textEmbeddingSource`. */
   text(ad: Record<string, unknown>): string;
+  /** The DENSE chunk texts for this ad, split from the source-selected text
+   *  (`description` composite or full `pageContent`) and capped by `maxTextChunks`. */
+  textChunks(ad: Record<string, unknown>, opts?: IngestOptions): Promise<string[]>;
   /** Image URLs to CLIP-embed. */
   imageUrls(ad: Record<string, unknown>): string[];
   /** Coordinates / address for geocoding. */

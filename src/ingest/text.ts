@@ -2,7 +2,9 @@
 // ad is dense/sparse-embedded from. The engine's `listingText(PropertyListing)`
 // helper is intentionally NOT ported — it belongs to the read/hydration path, not
 // the ingest contract, and would pull in the listing schema needlessly.
+import { splitMarkdown } from "./chunk.js";
 import type { PropertyAd } from "./property-ad.js";
+import type { IngestOptions } from "./types.js";
 
 export const MAX_TEXT_CHARS = 8000;
 
@@ -51,4 +53,23 @@ export function propertyAdText(ad: PropertyAd): string {
     .filter(Boolean)
     .join("\n")
     .slice(0, MAX_TEXT_CHARS);
+}
+
+/**
+ * The text the DENSE chunk vectors are built from: the full cleaned `pageContent`
+ * when the pipeline selects `pageContent` (and it is non-empty), else the same
+ * description composite the sparse leg uses. No MAX_TEXT_CHARS cap here — chunking
+ * bounds the size instead.
+ */
+export function propertyAdDenseSource(ad: PropertyAd, opts?: IngestOptions): string {
+  if (opts?.textEmbeddingSource === "pageContent") {
+    const page = clean((ad as { pageContent?: unknown }).pageContent);
+    if (page) return page;
+  }
+  return propertyAdText(ad);
+}
+
+/** Markdown-aware dense chunks for a property ad, capped by `opts.maxTextChunks`. */
+export function propertyAdTextChunks(ad: PropertyAd, opts?: IngestOptions): Promise<string[]> {
+  return splitMarkdown(propertyAdDenseSource(ad, opts), opts?.maxTextChunks);
 }
