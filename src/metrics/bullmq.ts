@@ -7,19 +7,18 @@ interface QueueLike {
   getJobCounts: (...states: string[]) => Promise<Record<string, number>>;
 }
 
-interface JobLike {
-  queueName?: string;
-}
+/*
+ * Structural adapter over each service's jobs-manager. Callback params are `any`
+ * on purpose: the concrete managers (IJobsManager in engine/scraper/ingestion)
+ * type `job`/`queue`/middleware more specifically, and function-parameter
+ * contravariance would otherwise reject an otherwise-compatible manager. We only
+ * rely on `queue.name`, `queue.getJobCounts()` and `job.queueName` at runtime.
+ */
 interface JobsManagerLike {
-  /** Fires for every registered BullMQ queue (engine/scraper/ingestion jobs-manager). */
-  onAdded: (cb: (job: unknown, queue: QueueLike) => void) => void;
-  /**
-   * Wraps every processor — same seam as track-execution-time.middleware.ts. The
-   * manager invokes `fn(job, next)` and the middleware forwards `next(job)`.
-   */
-  addMiddleware?: (
-    fn: (job: JobLike, next: (job: JobLike) => Promise<unknown>) => Promise<unknown>,
-  ) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onAdded: (cb: (job: any, queue: any) => void) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addMiddleware?: (fn: (job: any, next: (job: any) => Promise<any>) => Promise<any>) => void;
 }
 
 /**
