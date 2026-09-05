@@ -17,6 +17,44 @@ function strip(u: string): string {
   return u.endsWith("/") ? u.slice(0, -1) : u;
 }
 
+/**
+ * The umbrella chart ships `global.gateway.ip: "127.0.0.1"` as a placeholder and the
+ * gateway-ip-sync CronJob overlays the real LB IP ~2min later. A pod that booted on
+ * the placeholder derives `<svc>.127.0.0.1.nip.io` hosts from it.
+ *
+ * Keycloak's realm import is already gated on the real IP (await-gateway-ip
+ * initContainer), but the `sso_provider` row was not: whichever pod finished its
+ * start-up registration LAST won, and a stale-env pod riding out a not-yet-ready
+ * Postgres could overwrite a correct row minutes later. The endpoints live in a PVC,
+ * so no pod restart or helm upgrade ever corrected them and SSO failed permanently
+ * with `discovery_private_host` ("tokenEndpoint host resolves to a
+ * non-publicly-routable address").
+ *
+ * Refuse to persist those hosts. `*.127.0.0.1.nip.io` is unambiguously the
+ * unresolved placeholder — a real deployment never produces it — so this is safe to
+ * reject outright. Plain `localhost` / `127.0.0.1` issuers are NOT rejected: those
+ * are legitimate for local development.
+ */
+const GATEWAY_IP_PLACEHOLDER_HOST = /(^|\.)127\.0\.0\.1\.nip\.io$/i;
+
+export function assertResolvedIssuer(issuer: string): void {
+  let host: string;
+  try {
+    host = new URL(issuer).hostname;
+  } catch {
+    throw new Error(`[sso:register] issuer is not a valid URL: ${issuer}`);
+  }
+  if (GATEWAY_IP_PLACEHOLDER_HOST.test(host)) {
+    throw new Error(
+      `[sso:register] refusing to register issuer "${issuer}": the host still carries the ` +
+        `chart's 127.0.0.1 gateway placeholder, so every persisted OIDC endpoint would be ` +
+        `unreachable and SSO would fail with discovery_private_host. Wait for the ` +
+        `gateway-ip-sync CronJob to publish the real LoadBalancer IP (nsi-gateway-ip ` +
+        `ConfigMap), then retry — the caller's retry loop handles this.`,
+    );
+  }
+}
+
 export interface KeycloakOidcInput {
   /** Public issuer — browser-facing (authorization redirect + token `iss`). */
   issuer: string;
@@ -103,6 +141,11 @@ export interface UpsertSsoProviderInput {
  */
 export async function upsertSsoProvider(input: UpsertSsoProviderInput): Promise<void> {
   const { databaseUrl, providerId, issuer, domain, oidcConfig } = input;
+  // Never persist the chart's unresolved gateway placeholder (see assertResolvedIssuer).
+  // Throwing here is deliberate: the caller's start-up retry loop re-runs until the
+  // real IP lands, which is strictly better than booting on a poisoned row that
+  // nothing later corrects.
+  assertResolvedIssuer(issuer);
   const orm = await MikroORM.init({
     ...pgSslOptions(databaseUrl),
     entities: authEntities,
