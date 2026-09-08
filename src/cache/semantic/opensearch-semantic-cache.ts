@@ -179,14 +179,14 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
   }
 
   /**
-   * OpenSearch k-NN under the `cosinesimil` space returns `_score = 1 / (2 - cos)`,
-   * so `cos = 2 - 1/score` (identical → score 1 → cos 1; orthogonal → score 0.5 →
-   * cos 0). This assumes the `nmslib` engine + `cosinesimil` space configured below;
-   * if you switch engine/space, revisit this formula (see the OpenSearch k-NN score
-   * normalization table).
+   * OpenSearch k-NN with the `lucene` engine + `cosinesimil` space returns
+   * `_score = (1 + cos) / 2`, so `cos = 2 * score - 1` (identical → score 1 → cos 1;
+   * orthogonal → score 0.5 → cos 0; opposite → score 0 → cos -1). NB: this differs
+   * from nmslib's `1/(2 - cos)` — the score normalization is engine-dependent, so if
+   * you switch engine/space, revisit this formula (see the OpenSearch k-NN score table).
    */
   protected normalizeScore(score: number): number {
-    return score > 0 ? 2 - 1 / score : -1;
+    return 2 * score - 1;
   }
 
   protected async buildStore(): Promise<SemanticVectorStore<MetadataFilter>> {
@@ -208,7 +208,10 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
     const store = new OpenSearchVectorStore(this.osOpts.embeddings, {
       client,
       indexName: this.osOpts.name,
-      vectorSearchOptions: { engine: "nmslib", spaceType: "cosinesimil" },
+      // `lucene` (built-in) — nmslib is deprecated and rejected for new-index creation
+      // in OpenSearch 3.0+. lucene supports cosinesimil; see normalizeScore for the
+      // engine-specific score formula.
+      vectorSearchOptions: { engine: "lucene", spaceType: "cosinesimil" },
     });
     return store as unknown as SemanticVectorStore<MetadataFilter>;
   }
