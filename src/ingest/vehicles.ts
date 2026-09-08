@@ -21,8 +21,10 @@ import { type VehicleAd, vehicleAdSchema } from "./vehicle-ad.js";
  */
 export const VEHICLE_AD_INDEX = "vehicle_ads";
 
-const DENSE_DIM = 1024;
-const IMAGE_DIM = 512;
+const DENSE_DIM = Number(process.env.TEXT_EMBEDDING_DIM) || 1024;
+// Honors the deployment's IMAGE_EMBEDDING_DIM (dev CLIP 512 / prod Jina 2048);
+// was hardcoded 512, which broke the prod 2048 profile.
+const IMAGE_DIM = Number(process.env.IMAGE_EMBEDDING_DIM) || 512;
 const MAX_QUERY_WINDOW = 16384;
 
 const knnVector = (dimension: number) => ({

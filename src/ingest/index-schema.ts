@@ -7,10 +7,12 @@ import { MAX_TEXT_CHUNKS } from "./chunk.js";
 
 export const PROPERTY_AD_INDEX = "property_ads";
 
-export const DENSE_DIM = 1024;
-/** CLIP image-vector dimension. The knn mapping below and the image embedding
- *  client default (see `./embeddings.ts`) agree on this value. */
-export const CLIP_DIM = 512;
+export const DENSE_DIM = Number(process.env.TEXT_EMBEDDING_DIM) || 1024;
+/** Image-vector dimension. Honors the deployment's IMAGE_EMBEDDING_DIM profile
+ *  (dev CLIP 512 / prod Jina 2048); the knn mapping below and the image embedding
+ *  client default (see `./embeddings.ts`) agree on this value. Was hardcoded 512,
+ *  which broke the prod 2048 profile (index field != embedding size). */
+export const CLIP_DIM = Number(process.env.IMAGE_EMBEDDING_DIM) || 512;
 export const MAX_IMAGES = 16;
 export const MAX_QUERY_WINDOW = 16384;
 
