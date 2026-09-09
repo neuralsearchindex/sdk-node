@@ -24,6 +24,15 @@ function makeTextEmbeddings(modelName: string): Embeddings {
       return new OpenAIEmbeddings({
         apiKey: process.env.OPENAI_API_KEY,
         model,
+        // Request float, not base64. @langchain/openai defaults encoding_format to
+        // "base64", but OpenAI-compatible backends behind LiteLLM (bge-m3, TEI, vLLM)
+        // ignore that and always return a float array — which LangChain then tries to
+        // base64-decode into garbage (an all-zero, wrong-length vector). A zero vector
+        // makes every OpenSearch/Milvus kNN store+query fail ("zero vector is not
+        // supported when space type is [cosinesimil]"), silently emptying the semantic
+        // caches (model/intent/route) and user-memory. Forcing float keeps request and
+        // decode consistent with what these servers actually return.
+        encodingFormat: "float",
         configuration: {
           // Prefer a dedicated bge-m3-embeddings endpoint; fall back to the
           // shared OpenAI base URL when unset.

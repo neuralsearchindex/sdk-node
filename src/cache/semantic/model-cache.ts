@@ -18,7 +18,7 @@ import type {
  * This is a SEMANTIC LLM cache and is DIFFERENT from the exact-hash key/value
  * cache in `@neuralsearchindex/cache` — the two layers are independent and can both be on.
  *
- *   MODEL_CACHE_ENABLED               "true" turns it on (default OFF).
+ *   MODEL_CACHE_ENABLED               "false" turns it off (default ON).
  *   MODEL_CACHE_BACKEND               vector store: "milvus" (default) | "pgvector" | "opensearch".
  *   MODEL_CACHE_COLLECTION            collection / table / index name (default "llm_semantic_cache").
  *   MODEL_CACHE_SIMILARITY_THRESHOLD  min COSINE similarity for a hit (default 0.95).
@@ -34,7 +34,7 @@ import type {
  */
 
 const ENABLED =
-  (process.env.MODEL_CACHE_ENABLED ?? "false").toLowerCase() === "true";
+  (process.env.MODEL_CACHE_ENABLED ?? "true").toLowerCase() === "true";
 const BACKEND = (process.env.MODEL_CACHE_BACKEND ?? "milvus").toLowerCase();
 const COLLECTION = process.env.MODEL_CACHE_COLLECTION || "llm_semantic_cache";
 const THRESHOLD =
