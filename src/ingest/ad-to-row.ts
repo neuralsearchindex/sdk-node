@@ -21,6 +21,19 @@ export interface ImageStruct {
    * the URL preserved — the intended "blind photo" behaviour.
    */
   image_vector?: number[];
+  /**
+   * 0-based display order after aesthetic sorting (best photo first). Stamped by
+   * the ingestion-pipeline `order-images` step. Absent ⇒ position in the array is
+   * the order (back-compat).
+   */
+  order?: number;
+  /** CLIP-cosine aesthetic score in [0,1]; higher = more attractive photo. */
+  aesthetic_score?: number;
+  /**
+   * Photo category (exterior/interior/floor-plan/other). Populated once the
+   * siglip classifier is wired into ingestion; absent until then.
+   */
+  type?: string;
 }
 
 export interface TextChunk {

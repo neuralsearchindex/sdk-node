@@ -27,6 +27,25 @@ const knnVector = (dimension: number) => ({
   }
 });
 
+/**
+ * The nested `images` mapping, shared across every domain so all indices carry the
+ * same per-photo shape: the URL, its CLIP vector, and the persisted aesthetic
+ * ordering fields (`order`/`aesthetic_score`/`type`) stamped at ingest. `dim` is
+ * the image-vector dimension for the domain; `maxCapacity` caps indexed nested docs
+ * (omitted ⇒ no cap).
+ */
+export const imagesNested = (dim: number, maxCapacity?: number) => ({
+  type: "nested" as const,
+  ...(maxCapacity ? { max_capacity: maxCapacity } : {}),
+  properties: {
+    url: { type: "keyword" },
+    image_vector: knnVector(dim),
+    order: { type: "integer" },
+    aesthetic_score: { type: "float" },
+    type: { type: "keyword" }
+  }
+});
+
 export function propertyAdIndexMapping(): Record<string, unknown> {
   return {
     properties: {
@@ -105,14 +124,7 @@ export function propertyAdIndexMapping(): Record<string, unknown> {
         }
       },
       sparse_vector: { type: "rank_features" },
-      images: {
-        type: "nested",
-        max_capacity: MAX_IMAGES,
-        properties: {
-          url: { type: "keyword" },
-          image_vector: knnVector(CLIP_DIM)
-        }
-      }
+      images: imagesNested(CLIP_DIM, MAX_IMAGES)
     }
   };
 }

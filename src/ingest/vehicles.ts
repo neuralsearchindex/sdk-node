@@ -8,6 +8,7 @@ import { type LatLon, pointWkt } from "../geo/index.js";
 import { Domain } from "../schemas/domain.js";
 import type { ImageStruct, SparseVector } from "./ad-to-row.js";
 import { MAX_TEXT_CHUNKS, splitMarkdown } from "./chunk.js";
+import { imagesNested } from "./index-schema.js";
 import { listingId } from "./listing-id.js";
 import type { DomainDescriptor, DomainIngest, IngestContext, IngestOptions } from "./types.js";
 import { canonicalizeUrl } from "./url.js";
@@ -135,13 +136,7 @@ export function vehicleAdIndexMapping(): Record<string, unknown> {
         }
       },
       sparse_vector: { type: "rank_features" },
-      images: {
-        type: "nested",
-        properties: {
-          url: { type: "keyword" },
-          image_vector: knnVector(IMAGE_DIM)
-        }
-      }
+      images: imagesNested(IMAGE_DIM)
     }
   };
 }

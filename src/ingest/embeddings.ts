@@ -59,6 +59,15 @@ export interface TextEmbeddingClient {
 
 export interface ImageEmbeddingClient {
   embedImages(urls: string[]): Promise<(number[] | null)[]>;
+  /**
+   * Embed text prompts in the SAME CLIP space as images. The CLIP endpoint
+   * (`clip-embeddings /v1/embeddings`) auto-routes non-URL `input` to the text
+   * encoder, so the resulting vectors are directly cosine-comparable to
+   * `image_vector`s — used to score photos against an aesthetic text prompt.
+   * Order-preserved; `null` per entry that failed, all-null when the call fails
+   * or the client is disabled.
+   */
+  embedTexts(texts: string[]): Promise<(number[] | null)[]>;
 }
 
 /** JSON object keys are strings; sparse vectors want numeric indices. */
@@ -195,26 +204,31 @@ export function makeImageEmbeddingClient(options: EmbeddingClientOptions = {}): 
   const active = Boolean(enabled && url);
   const authHeader = authHeaderFor(apiKey);
 
-  async function embedImages(urls: string[]): Promise<(number[] | null)[]> {
-    if (urls.length === 0) return [];
-    if (!active) return urls.map(() => null);
+  /**
+   * POST `input` to the CLIP `/embeddings` route and map the envelope to one
+   * vector-or-null per entry, order preserved. Shared by image-URL and text-prompt
+   * embedding (the endpoint auto-routes by input shape into the same space).
+   */
+  async function embed(input: string[]): Promise<(number[] | null)[]> {
+    if (input.length === 0) return [];
+    if (!active) return input.map(() => null);
 
-    const res = await postWithRetry(`${url}/embeddings`, { model, input: urls, dimensions: dim }, authHeader);
-    if (!res || !res.ok) return urls.map(() => null);
+    const res = await postWithRetry(`${url}/embeddings`, { model, input, dimensions: dim }, authHeader);
+    if (!res || !res.ok) return input.map(() => null);
     let body: EmbeddingsResponse;
     try {
       body = (await res.json()) as EmbeddingsResponse;
     } catch {
-      return urls.map(() => null);
+      return input.map(() => null);
     }
-    if (!Array.isArray(body.data)) return urls.map(() => null);
-    return urls.map((_, i) => {
+    if (!Array.isArray(body.data)) return input.map(() => null);
+    return input.map((_, i) => {
       const vec = body.data?.[i]?.embedding;
       return Array.isArray(vec) && vec.length > 0 ? (vec as number[]) : null;
     });
   }
 
-  return { embedImages };
+  return { embedImages: embed, embedTexts: embed };
 }
 
 /**
