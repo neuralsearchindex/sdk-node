@@ -122,6 +122,10 @@ export function vehicleAdIndexMapping(): Record<string, unknown> {
       updated_at: { type: "keyword" },
       scraped_at: { type: "long" },
 
+      // Embedding-input hashes (skip-if-unchanged). _source-only, never queried.
+      text_hash: { type: "keyword", index: false, doc_values: false },
+      image_hash: { type: "keyword", index: false, doc_values: false },
+
       page_content_chunks: {
         type: "nested",
         max_capacity: MAX_TEXT_CHUNKS,
@@ -253,7 +257,7 @@ export function vehicleAdTextChunks(ad: VehicleAd, opts?: IngestOptions): Promis
 
 /** Map a validated VehicleAd + enrichment into the `vehicle_ads` `_source` document. */
 export function vehicleAdToRow(ad: VehicleAd, ctx: IngestContext): Record<string, unknown> {
-  const { geo, chunks, sparse, images, now } = ctx;
+  const { geo, chunks, sparse, images, now, textHash, imageHash } = ctx;
   const address = ad.address ?? {};
   const price = ad.price ?? {};
 
@@ -329,6 +333,10 @@ export function vehicleAdToRow(ad: VehicleAd, ctx: IngestContext): Record<string
     published_at: s(ad.publishedAt, 64),
     updated_at: s(ad.updatedAt, 64),
     scraped_at: now,
+
+    // Embedding-input hashes for next-run skip-if-unchanged. _source-only fields.
+    ...(textHash ? { text_hash: textHash } : {}),
+    ...(imageHash ? { image_hash: imageHash } : {}),
 
     // Nested per-chunk text vectors (text analogue of nested image vectors).
     // Per chunk, omit chunk_vector when the encoder was off (blind chunk); omit

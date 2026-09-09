@@ -81,7 +81,9 @@ export function propertyAdToRow(
   chunks: TextChunk[],
   sparse: SparseVector | null,
   images: ImageStruct[],
-  scrapedAt: number
+  scrapedAt: number,
+  textHash?: string | null,
+  imageHash?: string | null
 ): Record<string, unknown> {
   const address = ad.address ?? {};
   const f = ad.fundamentals;
@@ -144,6 +146,9 @@ export function propertyAdToRow(
     source_domain: sourceDomain(ad.sourceUrl),
     search_query: "",
     scraped_at: scrapedAt,
+    // Embedding-input hashes for next-run skip-if-unchanged. _source-only fields.
+    ...(textHash ? { text_hash: textHash } : {}),
+    ...(imageHash ? { image_hash: imageHash } : {}),
     location: geo ? pointWkt(geo.lat, geo.lon) : null,
     // Nested per-chunk text vectors (the text analogue of nested per-photo image
     // vectors). Omit the field entirely when there are no chunks; per chunk, omit

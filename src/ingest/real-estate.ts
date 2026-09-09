@@ -47,7 +47,16 @@ const ingest: DomainIngest = {
     };
   },
   toDocument: (ad, ctx) =>
-    propertyAdToRow(ad as unknown as PropertyAd, ctx.geo, ctx.chunks, ctx.sparse, ctx.images, ctx.now),
+    propertyAdToRow(
+      ad as unknown as PropertyAd,
+      ctx.geo,
+      ctx.chunks,
+      ctx.sparse,
+      ctx.images,
+      ctx.now,
+      ctx.textHash,
+      ctx.imageHash
+    ),
   indexMapping: propertyAdIndexBody
 };
 

@@ -86,6 +86,9 @@ export { propertyAdText, propertyAdTextChunks, propertyAdDenseSource, MAX_TEXT_C
 export { listingId, LISTING_ID_NAMESPACE } from "./listing-id.js";
 export { canonicalizeUrl } from "./url.js";
 
+// Embedding-input content hashes (skip re-embedding unchanged listings).
+export { textEmbeddingHash, imageEmbeddingHash } from "./hash.js";
+
 // Ingest-time embedding clients + geocoding helper.
 export {
   makeTextEmbeddingClient,

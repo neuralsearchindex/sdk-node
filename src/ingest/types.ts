@@ -47,6 +47,11 @@ export interface IngestContext {
   images: ImageStruct[];
   /** Ingest timestamp (epoch ms) — the document's `scraped_at`. */
   now: number;
+  /** Hash of the text embedding inputs, stamped on the doc for next-run change
+   *  detection (skip re-embedding when unchanged). Omitted ⇒ field not written. */
+  textHash?: string | null;
+  /** Hash of the image embedding inputs (the capped URL list). Omitted ⇒ not written. */
+  imageHash?: string | null;
 }
 
 /**

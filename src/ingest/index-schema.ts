@@ -86,6 +86,11 @@ export function propertyAdIndexMapping(): Record<string, unknown> {
       search_query: { type: "keyword" },
       scraped_at: { type: "long" },
 
+      // Embedding-input hashes (skip-if-unchanged). Only ever read back via _source,
+      // never queried/aggregated — no inverted index or doc-values overhead.
+      text_hash: { type: "keyword", index: false, doc_values: false },
+      image_hash: { type: "keyword", index: false, doc_values: false },
+
       location: { type: "geo_point" },
 
       // Nested per-chunk text vectors (the text analogue of nested per-photo image
