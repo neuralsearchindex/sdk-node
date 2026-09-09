@@ -19,7 +19,7 @@ import type {
  * cache in `@neuralsearchindex/cache` — the two layers are independent and can both be on.
  *
  *   MODEL_CACHE_ENABLED               "false" turns it off (default ON).
- *   MODEL_CACHE_BACKEND               vector store: "milvus" (default) | "postgresql" | "opensearch" (alias: "pgvector").
+ *   MODEL_CACHE_BACKEND               vector store: "milvus" (default) | "postgresql" | "opensearch".
  *   MODEL_CACHE_COLLECTION            collection / table / index name (default "llm_semantic_cache").
  *   MODEL_CACHE_SIMILARITY_THRESHOLD  min COSINE similarity for a hit (default 0.95).
  *   MODEL_CACHE_MAX_EMBED_CHARS       truncate the user message before embedding (default 8000).
@@ -61,7 +61,7 @@ let active: BaseCache | null | undefined;
 export interface BuildSemanticCacheOptions {
   /** Backend collection / table / index name. */
   collection: string;
-  /** Vector store: "milvus" (default) | "postgresql" | "opensearch" (alias: "pgvector"). */
+  /** Vector store: "milvus" (default) | "postgresql" | "opensearch". */
   backend?: string;
   /** Min COSINE similarity (0..1) for a hit. Default 0.9. */
   similarityThreshold?: number;
@@ -90,10 +90,8 @@ export function buildSemanticCache(
   };
 
   switch (backend) {
-    // "postgresql" matches the storage SEARCH_BACKEND naming; "pgvector" is kept
-    // as a back-compat alias for the same Postgres/pgvector-backed store.
-    case "postgresql":
-    case "pgvector": {
+    // "postgresql" matches the storage SEARCH_BACKEND naming (Postgres/pgvector store).
+    case "postgresql": {
       if (!DATABASE_URL)
         throw new Error("DATABASE_URL is required when backend=postgresql");
       return new PgVectorSemanticCache({
