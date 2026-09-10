@@ -31,6 +31,20 @@ export interface ErrorTrackingConfig {
    * trust boundary from the process that crashed.
    */
   includeLocalVariables: boolean;
+  /**
+   * Leave OpenTelemetry alone.
+   *
+   * The Sentry Node SDK installs its OWN OpenTelemetry TracerProvider. A
+   * service that already runs a NodeSDK — `agents` does, for Langfuse — ends
+   * up with two providers racing to register globally, and the loser's traces
+   * vanish. Since Langfuse is the LLM tracing story there, Sentry defers:
+   * errors still work, tracing stays with the provider that was already
+   * doing the job.
+   *
+   * Not read from the environment. Whether a process owns its own tracer is a
+   * property of the code, not of the deployment.
+   */
+  skipOpenTelemetrySetup: boolean;
 }
 
 /**
@@ -57,6 +71,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): ErrorTrackingC
     tracesSampleRate: rate(env.SENTRY_TRACES_SAMPLE_RATE),
     profilesSampleRate: rate(env.SENTRY_PROFILES_SAMPLE_RATE),
     includeLocalVariables: bool(env.SENTRY_INCLUDE_LOCAL_VARIABLES),
+    skipOpenTelemetrySetup: false,
   };
 }
 

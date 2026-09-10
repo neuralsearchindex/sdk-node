@@ -74,6 +74,7 @@ export function initErrors(overrides: Partial<ErrorTrackingConfig> = {}): boolea
     tracesSampleRate: cfg.tracesSampleRate,
     profilesSampleRate: cfg.profilesSampleRate,
     includeLocalVariables: cfg.includeLocalVariables,
+    skipOpenTelemetrySetup: cfg.skipOpenTelemetrySetup,
   });
 
   // Tag every event with the component name. The DSN already routes to this
