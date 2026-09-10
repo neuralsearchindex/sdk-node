@@ -1,0 +1,44 @@
+name: Test sdk-node
+
+# Runs on every push and PR, and is CALLED BY build.yaml so a failing check
+# blocks the image. Until 2026-09-10 CI only proved the image compiled — two
+# images that could not boot at all were published and rolled to production,
+# each caught only by a human reading pod logs.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_call: {}
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.3
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      # `pnpm build` runs `tsc --noCheck`, so it does NOT type-check — which is how
+      # two type errors sat here unnoticed. types:check is the real gate. sdk-node
+      # is the shared dependency of every service and had no CI at all before this.
+
+      - name: Type-check
+        run: pnpm types:check
+
+      - name: Build
+        run: pnpm build

@@ -144,7 +144,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tsc --noCheck -p tsconfig.json",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "types:check": "tsc --noEmit"
   },
   "dependencies": {
     "@better-auth/sso": "1.7.1",

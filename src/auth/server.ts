@@ -43,6 +43,12 @@ export interface CreateAuthOptions {
  * Async because it resolves the shared MikroORM instance; callers use top-level await:
  *   export const auth = await createAuth({ ... });
  */
+// The declared return type is deliberately the WIDE `Auth<BetterAuthOptions>`.
+// betterAuth() actually returns a plugin-parameterised `Auth<{plugins: [...]}>`
+// which is not assignable to it (generic invariance), and letting TypeScript
+// infer the precise type instead fails differently: TS2742/TS7056, because the
+// inferred type references zod's internals and exceeds the serialisation limit.
+// So: keep the portable declared type and cast at the return.
 export async function createAuth(
   options: CreateAuthOptions,
 ): Promise<ReturnType<typeof betterAuth>> {
@@ -58,5 +64,5 @@ export async function createAuth(
     // Federate to an external OIDC provider (Keycloak today). Provider-agnostic:
     // registered at runtime by issuer, so nothing here is Keycloak-specific.
     plugins: [sso(), ...(options.extraPlugins ?? [])],
-  });
+  }) as unknown as ReturnType<typeof betterAuth>;
 }

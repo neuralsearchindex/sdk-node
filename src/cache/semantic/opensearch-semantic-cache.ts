@@ -211,7 +211,11 @@ export class OpenSearchSemanticCache extends BaseSemanticCache<MetadataFilter> {
       // `lucene` (built-in) — nmslib is deprecated and rejected for new-index creation
       // in OpenSearch 3.0+. lucene supports cosinesimil; see normalizeScore for the
       // engine-specific score formula.
-      vectorSearchOptions: { engine: "lucene", spaceType: "cosinesimil" },
+      // @langchain/community types `engine` as "nmslib" | "hnsw" only. OpenSearch
+      // itself also accepts "lucene", which is the one we need per the note above.
+      // The value is correct and the upstream type is too narrow, so narrow-cast
+      // rather than send an engine OpenSearch 3.0+ rejects.
+      vectorSearchOptions: { engine: "lucene" as "hnsw", spaceType: "cosinesimil" },
     });
     return store as unknown as SemanticVectorStore<MetadataFilter>;
   }
