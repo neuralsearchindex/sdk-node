@@ -195,7 +195,7 @@ export function makeTextEmbeddingClient(options: EmbeddingClientOptions = {}): T
  * preserved): a vector, or `null` where an image could not be embedded, or all
  * `null` when the whole call fails / the client is disabled. A no-op with zero
  * network calls when `enabled === false` or `url` is falsy. The default `dim`
- * (CLIP_DIM = 512) agrees with the nested `image_vector` knn mapping dimension.
+ * (CLIP_DIM, default 2048) agrees with the nested `image_vector` knn mapping dimension.
  */
 export function makeImageEmbeddingClient(options: EmbeddingClientOptions = {}): ImageEmbeddingClient {
   const { url, enabled = true, apiKey = process.env.OPENAI_API_KEY } = options;
