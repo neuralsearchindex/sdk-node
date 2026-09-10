@@ -18,8 +18,8 @@ export const CLIP_DIM = Number(process.env.IMAGE_EMBEDDING_DIM) || 2048;
 /** How many images per document are embedded and indexed. Env-driven so it
  *  matches the engine, which reads the same variable: this was 16 here and 20
  *  there (and 30 in one engine ingest path), so the number of photos a listing
- *  kept depended on which code path happened to ingest it. Default 20. */
-export const MAX_IMAGES = Number(process.env.MAX_IMAGES) || 20;
+ *  kept depended on which code path happened to ingest it. Default 25. */
+export const MAX_IMAGES = Number(process.env.MAX_IMAGES) || 25;
 export const MAX_QUERY_WINDOW = 16384;
 
 const knnVector = (dimension: number) => ({
