@@ -15,7 +15,11 @@ export const DENSE_DIM = Number(process.env.TEXT_EMBEDDING_DIM) || 1024;
  *  disagreed with the running deployment: the index field and the embedding size
  *  have to be equal, and an existing index cannot be re-dimensioned in place. */
 export const CLIP_DIM = Number(process.env.IMAGE_EMBEDDING_DIM) || 2048;
-export const MAX_IMAGES = 16;
+/** How many images per document are embedded and indexed. Env-driven so it
+ *  matches the engine, which reads the same variable: this was 16 here and 20
+ *  there (and 30 in one engine ingest path), so the number of photos a listing
+ *  kept depended on which code path happened to ingest it. Default 20. */
+export const MAX_IMAGES = Number(process.env.MAX_IMAGES) || 20;
 export const MAX_QUERY_WINDOW = 16384;
 
 const knnVector = (dimension: number) => ({
