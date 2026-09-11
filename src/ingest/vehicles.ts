@@ -362,7 +362,13 @@ const ingest: DomainIngest = {
   textChunks: (ad, opts) => vehicleAdTextChunks(ad as VehicleAd, opts),
   imageUrls: (ad) => vehicleImageUrls(ad as VehicleAd),
   locationHint: (ad) => {
-    const address = (ad as VehicleAd).address ?? {};
+    const v = ad as VehicleAd;
+    // A car has no address of its own: providers map the SELLER's address under
+    // `agent.agency` (dealer) or `agent.agent` (private), which is where the listing
+    // physically is. Reading only the top-level `address` left every vehicle ad with no
+    // hint at all, so geocoding resolved nothing and each doc indexed without `location`
+    // and was flagged "degraded: geo" — victory-cars-pl and otomoto-pl both nest it.
+    const address = v.address ?? v.agent?.agency?.address ?? v.agent?.agent?.address ?? {};
     const coords = address.coordinates;
     if (coords && typeof coords.lat === "number" && typeof coords.lon === "number") {
       return { coords: { lat: coords.lat, lon: coords.lon } as LatLon, address: null };
