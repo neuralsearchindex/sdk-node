@@ -24,7 +24,11 @@ export function propertyAdText(ad: PropertyAd): string {
   if (f?.rooms != null) facts.push(`${f.rooms} rooms`);
   if (f?.livingSpace?.value != null) facts.push(`${f.livingSpace.value} m² living space`);
   if (f?.landArea?.value != null) facts.push(`${f.landArea.value} m² land`);
-  if (f?.price?.amount != null) facts.push(`${f.price.amount} ${f.price.currency ?? "CHF"}`);
+  // No currency fallback: this text is EMBEDDED, so guessing one writes "850000 CHF"
+  // into the vectors of an ad priced in another currency. Omit what we do not know.
+  if (f?.price?.amount != null) {
+    facts.push(f.price.currency ? `${f.price.amount} ${f.price.currency}` : String(f.price.amount));
+  }
   if (f?.yearOfConstruction != null) facts.push(`built ${f.yearOfConstruction}`);
   if (f?.condition) facts.push(String(f.condition));
 

@@ -151,7 +151,7 @@ export const addressSchema = z
     country: countryCodeSchema,
     street: z.string().describe("Street name."),
     houseNumber: z.string().describe("House number."),
-    postalCode: z.string().describe("PLZ / Postal code."),
+    postalCode: z.string().describe("Postal code."),
     city: z.string().describe("City."),
     state: z.string().describe("State (optional). Use empty string if not applicable."),
     coordinates: z
