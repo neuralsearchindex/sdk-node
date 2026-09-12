@@ -7,16 +7,15 @@ import { Domain } from "../schemas/domain.js";
 import { adId, propertyAdToRow } from "./ad-to-row.js";
 import { PROPERTY_AD_INDEX, propertyAdIndexBody } from "./index-schema.js";
 import type { PropertyAd } from "./property-ad.js";
+import { zodParser } from "./parse.js";
 import { propertyAdSchema } from "./property-ad.js";
 import { propertyAdText, propertyAdTextChunks } from "./text.js";
 import type { DomainDescriptor, DomainIngest } from "./types.js";
 
 /** Ingest mappers for the property vertical — the original single-domain flow, now behind the seam. */
 const ingest: DomainIngest = {
-  parse: (raw) => {
-    const result = propertyAdSchema.safeParse(raw);
-    return result.success ? (result.data as unknown as Record<string, unknown>) : null;
-  },
+  // `parse` + `parseSafe` from one schema — see `zodParser`.
+  ...zodParser(propertyAdSchema),
   id: (ad) => adId(ad as unknown as PropertyAd),
   text: (ad) => propertyAdText(ad as unknown as PropertyAd),
   textChunks: (ad, opts) => propertyAdTextChunks(ad as unknown as PropertyAd, opts),

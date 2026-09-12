@@ -1,6 +1,6 @@
 {
   "name": "@neuralsearchindex/sdk-node",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": false,
   "type": "module",
   "packageManager": "pnpm@10.6.3",

@@ -10,6 +10,7 @@ import type { ImageStruct, SparseVector } from "./ad-to-row.js";
 import { MAX_TEXT_CHUNKS, splitMarkdown } from "./chunk.js";
 import { imagesNested } from "./index-schema.js";
 import { listingId } from "./listing-id.js";
+import { zodParser } from "./parse.js";
 import type { DomainDescriptor, DomainIngest, IngestContext, IngestOptions } from "./types.js";
 import { canonicalizeUrl } from "./url.js";
 import { type VehicleAd, vehicleAdSchema } from "./vehicle-ad.js";
@@ -353,10 +354,8 @@ export function vehicleAdToRow(ad: VehicleAd, ctx: IngestContext): Record<string
 }
 
 const ingest: DomainIngest = {
-  parse: (raw) => {
-    const result = vehicleAdSchema.safeParse(raw);
-    return result.success ? (result.data as Record<string, unknown>) : null;
-  },
+  // `parse` + `parseSafe` from one schema — see `zodParser`.
+  ...zodParser(vehicleAdSchema),
   id: (ad) => vehicleAdId(ad as VehicleAd),
   text: (ad) => vehicleAdText(ad as VehicleAd),
   textChunks: (ad, opts) => vehicleAdTextChunks(ad as VehicleAd, opts),

@@ -22,6 +22,14 @@ export type {
   TextEmbeddingSource
 } from "./types.js";
 
+// Validation failures that survive the service boundary: `parseSafe` returns the
+// reason an ad was rejected, `summarizeIssues` turns it into a one-line reason
+// string, and `FailDetail` is what a caller persists alongside it.
+export { zodParser } from "./parse.js";
+export type { ParseResult } from "./parse.js";
+export { normalizeZodIssues, summarizeIssues, toFailDetail, issuesTruncated } from "./issues.js";
+export type { IngestIssue, FailDetail } from "./issues.js";
+
 // Markdown-aware chunking for the dense leg.
 export { splitMarkdown, CHUNK_SIZE, CHUNK_OVERLAP, MAX_TEXT_CHUNKS } from "./chunk.js";
 
@@ -38,6 +46,8 @@ export { adId, propertyAdToRow } from "./ad-to-row.js";
 // Per-domain validation schemas + inferred types.
 export {
   propertyAdSchema,
+  countryCodeSchema,
+  currencyCodeSchema,
   addressSchema,
   fundamentalsSchema,
   equipmentSchema,

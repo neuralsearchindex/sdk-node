@@ -10,6 +10,7 @@ import type { GeocodableAddress, LatLon } from "../geo/index.js";
 
 import type { Domain } from "../schemas/domain.js";
 import type { ImageStruct, SparseVector, TextChunk } from "./ad-to-row.js";
+import type { ParseResult } from "./parse.js";
 
 /** Which text a listing's DENSE chunk vectors are built from (admin-selectable per pipeline).
  *  The SPARSE/lexical leg always uses the description composite, regardless of this. */
@@ -62,7 +63,17 @@ export interface IngestContext {
  * live in one registry; each implementation casts to its concrete ad type.
  */
 export interface DomainIngest {
-  /** Validate a raw ad; return the parsed ad, or null when it fails the schema. */
+  /**
+   * Validate a raw ad, keeping the REASON it was rejected. Callers that record a
+   * failure should use this — `parse` collapses every schema problem to `null`,
+   * which is how "validation failed (schema)" ended up as the only diagnostic a
+   * failed ingestion item carried.
+   */
+  parseSafe(raw: unknown, scrapedId?: string): ParseResult;
+  /**
+   * Validate a raw ad; return the parsed ad, or null when it fails the schema.
+   * @deprecated Prefer {@link DomainIngest.parseSafe}, which keeps the field-level issues.
+   */
   parse(raw: unknown): Record<string, unknown> | null;
   /** Stable document id for the ad (dedupes re-scrapes of the same listing). */
   id(ad: Record<string, unknown>): string;
