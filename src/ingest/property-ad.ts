@@ -2,11 +2,30 @@
 // so the ingestion-pipeline validates real-estate ads against the SAME strict
 // zod contract the engine does. The SDK's `schemas/*` are pure wire-type mirrors
 // (no zod), which is why this validation schema is copied here rather than reused.
+//
+// "Verbatim" is load-bearing and has broken before: this schema also exists in
+// scraper-provider-sdk, scraper and agents, and when the scrape side was widened
+// to accept Poland and this side was not, every Polish ad scraped fine and then
+// failed ingestion with an unexplained schema error. The engine's
+// `schema-parity.test.ts` compares the two copies — keep them identical.
 import { z } from "zod";
 
 // --- Enums (aligned with property-ad-schema.json) ---
 
-export const countryCodeSchema = z.enum(["CH", "DE"]).describe("Country code.");
+// Open ISO code rather than an enum. The same schema is copied into five repos
+// (scraper-provider-sdk, scraper, sdk-node, engine, agents); the scraper half was
+// widened to CH/DE/PL for Poland and this half was not, so every Polish ad failed
+// `address.country` here while scraping fine. A pattern keeps the real constraint
+// (rejects "Polska", "pl") without a per-market edit in five files.
+export const countryCodeSchema = z
+  .string()
+  .regex(/^[A-Z]{2}$/, "Expected an ISO 3166-1 alpha-2 country code, e.g. CH, DE, PL.")
+  .describe("ISO 3166-1 alpha-2 country code (e.g. CH, DE, PL).");
+
+export const currencyCodeSchema = z
+  .string()
+  .regex(/^[A-Z]{3}$/, "Expected an ISO 4217 currency code, e.g. CHF, EUR, PLN.")
+  .describe("ISO 4217 currency code (e.g. CHF, EUR, PLN).");
 
 export const listingTypeSchema = z.enum(["rent", "buy"]).describe("Whether the ad is for rental or sale.");
 
@@ -149,18 +168,23 @@ export const addressSchema = z
 
 // --- Fundamentals ---
 
+// `currency` keeps its CHF default: making it required would turn "price with no
+// currency" into a NEW failure for existing CH ads. An ad from another market that
+// omits the field is therefore stamped CHF — every provider sets it explicitly.
+// Note prices are never converted anywhere downstream (filters compare raw amounts),
+// so listings in different currencies must not share one target index.
 const priceSchema = z
   .object({
     amount: z.number().min(0).describe("Numeric amount."),
-    currency: z.enum(["CHF"]).default("CHF")
+    currency: currencyCodeSchema.default("CHF")
   })
   .strict()
-  .describe("Price (CHF + amount).");
+  .describe("Price (amount + ISO 4217 currency).");
 
 const amountCurrencySchema = z
   .object({
     amount: z.number().min(0),
-    currency: z.enum(["CHF"])
+    currency: currencyCodeSchema
   })
   .strict();
 
