@@ -169,7 +169,17 @@ export function vehicleAdIndexBody(): Record<string, unknown> {
 const MAX_TEXT_CHARS = 8000;
 const s = (v: unknown, max: number): string => (typeof v === "string" ? v : v == null ? "" : String(v)).slice(0, max);
 /** Lowercased keyword (enums are keyword-typed and matched via lowercased `term`). */
-const kw = (v: unknown, max: number): string => s(v, max).toLowerCase();
+/**
+ * A keyword facet, or `undefined` when the ad does not state it — which drops the
+ * key from `_source` entirely instead of storing `""`.
+ *
+ * An empty string is worse than an absent field: it matches no query and does not
+ * register as missing either, so a filter cannot tell "not stated" from "stated as
+ * nothing". Every one of the 29 cars had `listing_type: ""`, so "cars to buy"
+ * filtered them all out. With the key absent, `exists` answers the question and the
+ * facet clauses can include unknowns.
+ */
+const kw = (v: unknown, max: number): string | undefined => s(v, max).toLowerCase() || undefined;
 const n = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
 const b = (v: unknown): boolean | null => (typeof v === "boolean" ? v : null);
 
