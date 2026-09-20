@@ -8,7 +8,7 @@ import { type LatLon, pointWkt } from "../geo/index.js";
 import { Domain } from "../schemas/domain.js";
 import type { ImageStruct, SparseVector } from "./ad-to-row.js";
 import { MAX_TEXT_CHUNKS, splitMarkdown } from "./chunk.js";
-import { imagesNested } from "./index-schema.js";
+import { MAX_IMAGES, imagesNested } from "./index-schema.js";
 import { listingId } from "./listing-id.js";
 import { zodParser } from "./parse.js";
 import type { DomainDescriptor, DomainIngest, IngestContext, IngestOptions } from "./types.js";
@@ -142,7 +142,9 @@ export function vehicleAdIndexMapping(): Record<string, unknown> {
         }
       },
       sparse_vector: { type: "rank_features" },
-      images: imagesNested(IMAGE_DIM)
+      // `MAX_IMAGES` matters: without it the nested images block has no
+      // max_capacity, which is how this mapping drifted from the engine's copy.
+      images: imagesNested(IMAGE_DIM, MAX_IMAGES)
     }
   };
 }
