@@ -90,6 +90,7 @@ export {
   vehicleAdTextChunks,
   vehicleAdToRow
 } from "./vehicles.js";
+export { canonicalVehicleModel, vehicleModelAliases, foldDiacritics } from "./vehicle-model.js";
 export { propertyAdText, propertyAdTextChunks, propertyAdDenseSource, MAX_TEXT_CHARS } from "./text.js";
 
 // Stable id + url canonicalization.

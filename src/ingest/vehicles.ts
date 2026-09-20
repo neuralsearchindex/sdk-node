@@ -14,6 +14,7 @@ import { zodParser } from "./parse.js";
 import type { DomainDescriptor, DomainIngest, IngestContext, IngestOptions } from "./types.js";
 import { canonicalizeUrl } from "./url.js";
 import { type VehicleAd, vehicleAdSchema } from "./vehicle-ad.js";
+import { canonicalVehicleModel, vehicleModelAliases } from "./vehicle-model.js";
 
 /**
  * Vehicles domain — the second vertical, proving ingest is domain-generic. Its
@@ -47,7 +48,11 @@ export function vehicleAdIndexMapping(): Record<string, unknown> {
       title: { type: "keyword" },
       description: { type: "keyword" },
       make: { type: "keyword" },
-      model: { type: "keyword" },
+      model: { type: "keyword" }, // canonical English (see vehicle-model.ts)
+      // Every spelling the same car may be asked for — canonical, the source's own
+      // wording ("klasa s"), folded and re-separated forms, plus `variant`. The
+      // model filter matches HERE, so a Polish ad answers an English question.
+      model_aliases: { type: "keyword" },
       variant: { type: "keyword" },
       body_type: { type: "keyword" },
       year: { type: "long" },
@@ -202,6 +207,11 @@ export function vehicleAdId(ad: VehicleAd): string {
   return listingId(seed);
 }
 
+/** `equipment: a, b, c` — or "" when the ad lists none, so no empty label is embedded. */
+function equipmentLine(keywords: string[]): string {
+  return keywords.length ? `equipment: ${keywords.join(", ")}` : "";
+}
+
 /** The text embedded (dense + sparse) for a car — identity, specs, colour, location, equipment. */
 export function vehicleAdText(ad: VehicleAd): string {
   const address = ad.address ?? {};
@@ -229,7 +239,10 @@ export function vehicleAdText(ad: VehicleAd): string {
     s(ad.title, 200),
     location,
     specs.join(", "),
-    vehicleFeatureKeywords(ad).join(", "),
+    // Labelled so the embedder (and anyone reading a chunk) can tell what the list
+    // is: the chunker splits this composite, and the equipment list is long enough
+    // to land in a chunk of its own, with no other context in it.
+    equipmentLine(vehicleFeatureKeywords(ad)),
     s(ad.description, 4000)
   ]
     .filter(Boolean)
@@ -262,7 +275,8 @@ export function vehicleAdToRow(ad: VehicleAd, ctx: IngestContext): Record<string
     title: s(ad.title, 500),
     description: s(ad.description, 4000),
     make: kw(ad.make, 64),
-    model: kw(ad.model, 64),
+    model: kw(canonicalVehicleModel(ad.model), 64),
+    model_aliases: vehicleModelAliases(ad.model, ad.variant, ad.make).map((a) => a.slice(0, 64)),
     variant: s(ad.variant, 128),
     body_type: kw(ad.bodyType, 32),
     year: n(ad.year),
